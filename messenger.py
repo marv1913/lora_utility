@@ -1,48 +1,52 @@
-import threading
+import logging
 import time
 
+import serial
+
 import main
+from lora_connector_threaded import LoraConnectorThreadedSyncedResponse
+from protocol_lite import ProtocolLite
 
 
-class Messenger:
-    ENCODING = 'utf-8'
+class Messenger(LoraConnectorThreadedSyncedResponse):
+    CONFIG_MODE = 0
+    SEND_MODE = 1
+    MODE = CONFIG_MODE
 
-    def __init__(self, lora_utility):
-        self.lora_utility = lora_utility
+    def __init__(self, ser_conn):
+        super().__init__(ser_conn)
+        self.protocol = ProtocolLite()
 
-    def start_receiving_messages(self):
-        while True:
-            raw_res = self.lora_utility.wait_for_message()
-            if raw_res is not None:
-                answer_as_list = main.convert_raw_answer_to_list()
-                print('got message from {sender} with length {length}: {message}'.format(sender=answer_as_list[1],
-                                                                                         length=answer_as_list[2],
-                                                                                         message=answer_as_list[3]))
+    def handle_received_line(self, message):
+        logging.debug('message: ' + message)
+        self.protocol.process_incoming_message(message)
 
-    def read_from_cli_and_send_message(self):
-        while True:
+    def send_message(self, message):
+        if self.execute_command('AT+SEND={}'.format(str(len(message))), verify_response_list=['AT,OK']):
+            print('sending message...')
+            if self.execute_command(message, verify_response_list=['AT,SENDING', 'AT,SENDED']):
+                print('message sended!')
 
-            value = input("enter string to send message:\n")
-            self.lora_utility.close_connection()
-            # self.lora_utility.send_message(value)
+    def start_chatting(self):
+        text = input("type 'help' to see how this program works:\n")
+        if ':' in text:
+            # in config mode
+            if text == ':config':
+                self.MODE = self.CONFIG_MODE
+                self.print_mode()
+            if text == ':send':
+                self.MODE = self.SEND_MODE
+                self.print_mode()
+        if text == 'help':
+            print('here you could get some support')
 
-    def start_message_receiving_thread(self):
-        while True:
-            self.lora_utility.open_connection()
-            t = threading.Thread(target=self.start_receiving_messages)
-            t.start()
+        self.send_message(text)
 
-            value = input("enter string to send message:\n")
-            self.lora_utility.close_connection()
-            t.join()
-            time.sleep(2)
-
-            self.lora_utility.open_connection()
-
-            self.lora_utility.send_message(value)
-            self.lora_utility.close_connection()
-
-            self.read_from_cli_and_send_message()
+    def print_mode(self):
+        if self.MODE == self.CONFIG_MODE:
+            print('config mode entered')
+        if self.MODE == self.SEND_MODE:
+            print('send mode entered')
 
 
 if __name__ == '__main__':
@@ -53,7 +57,10 @@ if __name__ == '__main__':
     #
     # while True:
     #     lora_conn.wait_for_message()
+    logging.basicConfig(level=logging.DEBUG)
 
-    messenger = Messenger(lora_conn)
-    messenger.start_message_receiving_thread()
-    # messenger.start_receiving_messages()
+    ser = serial.serial_for_url('/dev/ttyS0', baudrate=115200, timeout=30)
+    messenger = Messenger(ser)
+    messenger.start_receiving_thread()
+    # time.sleep(1)
+    # messenger.start_chatting()

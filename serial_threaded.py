@@ -1,5 +1,4 @@
 import os
-import sys
 import time
 import traceback
 
@@ -7,6 +6,7 @@ import serial
 from serial.threaded import LineReader, ReaderThread
 
 message_sended = True
+
 
 class PrintLines(LineReader):
     def connection_made(self, transport):

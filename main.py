@@ -1,8 +1,13 @@
+import logging
+
 import serial
 import time
 
+import header
+import protocol_lite
 
-class LoraConnecter():
+
+class LoraConnector:
     CONFIG_COMMAND_LIST = ['AT+CFG=433500000,5,6,12,4,1,0,0,0,0,3000,8,4', 'AT+ADDR=0137', 'AT+DEST=FFFF', 'AT+RX']
     SAVE_COMMAND = 'AT+SAVE'
     ENCODING = 'utf-8'
@@ -50,9 +55,19 @@ class LoraConnecter():
             self.execute_command(self.SAVE_COMMAND)
 
 
+# do not use readline()
+# better check buffer with in_waiting
+
 if __name__ == '__main__':
-    lora_conn = LoraConnecter()
+    lora_conn = LoraConnector()
     # lora_conn.config_module()
 
-    response = lora_conn.send_message('hello world', wait_for_answer=True)
-    print(response[0])
+    # response = lora_conn.send_message('hello world', wait_for_answer=True)
+    # print(response[0])
+
+    # while True:
+    #     lora_conn.send_message('hello')
+    #     time.sleep(5)
+    # logging.basicConfig(level=logging.INFO)
+    # print(protocol_lite.get_protocol_obj_from_raw_message('LR,0137,03,01370138030810hello'))
+    print(header.get_received_from_value('LR,0137'))
