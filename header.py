@@ -1,3 +1,6 @@
+import variables
+
+
 class Header:
     MIN_LENGTH_RAW_MESSAGE = 16
 
@@ -9,19 +12,41 @@ class Header:
 def create_header_from_raw_message(raw_message):
     if len(raw_message) < Header.MIN_LENGTH_RAW_MESSAGE:
         return None
-    flag = get_flag_from_raw_message(raw_message)
-    if flag == RouteRequestHeader.HEADER_TYPE:
-        # it is a route request header
-        pass
-    elif flag == RouteReplyHeader.HEADER_TYPE:
-        # it is a route reply header
-        pass
+
+
+def check_header(header_obj):
+    flag = header_obj.flag
+    if len(header_obj.source) != 4:
+        raise ValueError("header field 'source' has an unexpected format: {}".format(header_obj.source))
+    if header_obj.destination not in variables.AVAILABLE_NODES:
+        raise ValueError(
+            "unknown destination: {destination}\ available destinations are {available_destinations}".format(
+                destination=header_obj.destination, available_destinations=str(variables.AVAILABLE_NODES)))
+    check_two_digit_int_field(header_obj.ttl)
+    if flag == RouteRequestHeader.HEADER_TYPE or flag == RouteReplyHeader.HEADER_TYPE:
+        check_two_digit_int_field(header_obj.hops)
+        if flag == RouteRequestHeader.HEADER_TYPE:
+            check_addr_field(header_obj.requested_node, 'requested_node')
+        else:
+            check_addr_field(header_obj.previous_node, 'previous_node')
     elif flag == MessageHeader.HEADER_TYPE:
-        # it is a header of a chat message
-        pass
+        if len(header_obj.payload) == 0:
+            raise ValueError('payload is empty!')
     else:
-        # invalid flag
-        pass
+        raise ValueError("flag '{}' is not a valid flag".format(flag))
+    return flag
+
+
+def check_two_digit_int_field(two_digit_value_str):
+    if len(two_digit_value_str) != 2:
+        int(two_digit_value_str)
+
+
+def check_addr_field(addr_str, field_name):
+    if len(addr_str) != 4:
+        raise ValueError(
+            "header field '{field_name}' has an unexpected format: {addr_str}".format(field_name=field_name,
+                                                                                      addr_str=addr_str))
 
 
 def get_received_from_value(raw_message):
