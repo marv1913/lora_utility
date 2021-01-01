@@ -4,28 +4,22 @@ import time
 import serial
 
 import main
-from lora_connector_threaded import LoraConnectorThreadedSyncedResponse
 from protocol_lite import ProtocolLite
 
 
-class Messenger(LoraConnectorThreadedSyncedResponse):
+class Messenger():
     CONFIG_MODE = 0
     SEND_MODE = 1
     MODE = CONFIG_MODE
 
-    def __init__(self, ser_conn):
-        super().__init__(ser_conn)
-        self.protocol = ProtocolLite()
+    def __init__(self, protocol):
+        self.protocol = protocol
+        self.protocol.set_messenger(self)
 
-    def handle_received_line(self, message):
-        logging.debug('message: ' + message)
-        self.protocol.process_incoming_message(message)
-
-    def send_message(self, message):
-        if self.execute_command('AT+SEND={}'.format(str(len(message))), verify_response_list=['AT,OK']):
-            print('sending message...')
-            if self.execute_command(message, verify_response_list=['AT,SENDING', 'AT,SENDED']):
-                print('message sended!')
+    def chat_beta(self):
+        while True:
+            text = input("type 'help' to see how this program works:\n")
+            self.protocol.send_message('0131', text)
 
     def start_chatting(self):
         text = input("type 'help' to see how this program works:\n")
@@ -48,9 +42,12 @@ class Messenger(LoraConnectorThreadedSyncedResponse):
         if self.MODE == self.SEND_MODE:
             print('send mode entered')
 
+    def display_received_message(self, message_header_obj):
+        print('received message from {source}: {payload}'.format(source=message_header_obj.source,
+                                                                 payload=message_header_obj.payload))
+
 
 if __name__ == '__main__':
-    lora_conn = main.LoraConnector()
     # lora_conn.config_module()
 
     # response = lora_conn.send_message('ja', wait_for_answer=True)
@@ -58,9 +55,12 @@ if __name__ == '__main__':
     # while True:
     #     lora_conn.wait_for_message()
     logging.basicConfig(level=logging.DEBUG)
+    ser = serial.serial_for_url('/dev/ttyS0', baudrate=115200, timeout=5)
+    protocol = ProtocolLite(ser)
+    # protocol.send_message('0137', 'hey')
 
-    ser = serial.serial_for_url('/dev/ttyS0', baudrate=115200, timeout=30)
-    messenger = Messenger(ser)
-    messenger.start_receiving_thread()
-    # time.sleep(1)
-    # messenger.start_chatting()
+    messenger = Messenger(protocol)
+    protocol.set_messenger(messenger)
+
+
+    messenger.chat_beta()

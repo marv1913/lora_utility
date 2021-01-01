@@ -1,81 +1,68 @@
+import logging
 import threading
 import time
 from abc import abstractmethod
 
+import serial
+
 import variables
 from LoraConnectorAbstract import LoraConnectorAbstract, bytes_to_str, str_to_bytes
 
+lock = threading.Lock()
 
-class LoraConnectorThreaded(LoraConnectorAbstract):
+
+class LoraConnectorThreaded:
+    SEND_MESSAGE = False
+
     def __init__(self, ser_conn):
-        super().__init__(ser_conn)
+        logging.debug('instantiated LoraConnector')
 
-    def execute_command(self, command):
-        command = command + '\r\n'
-        command = bytes(command, variables.ENCODING)
-        self.ser.write(command)
-
-    def receive_messages(self):
-        while True:
-            if self.ser.in_waiting > 0:
-                self.handle_received_line(message=self.ser.readline())
-
-    @abstractmethod
-    def handle_received_line(self, message):
-        print(message)
-
-    def start_receiving_thread(self):
-        t = threading.Thread(target=self.receive_messages)
-        t.start()
-
-
-class LoraConnectorThreadedSyncedResponse(LoraConnectorAbstract):
-
-    COMMAND_SENDED = False
-
-    def __init__(self, ser):
-        super(LoraConnectorThreadedSyncedResponse, self).__init__(ser)
-        self.t = None
+        self.ser = ser_conn
 
     def execute_command(self, command, verify_response_list=None):
         successful = True
-        command = command + '\r\n'
-        command = str_to_bytes(command)
+        self.SEND_MESSAGE = True
+        self.ser.write(bytes(command + variables.TERMINATOR, variables.ENCODING))
         if verify_response_list is not None:
-            for expected_response in verify_response_list:
-                self.COMMAND_SENDED = True
-                self.t.join()
-                self.ser.write(command)
-                self.t.join()
-                response = bytes_to_str(self.ser.readline())
-                if response.strip() != expected_response:
-                    print('error: could not verify status "{}". Response was: {response}'.format(expected_response,
-                                                                                                 response=response))
+            for entry in verify_response_list:
+                status = str(self.ser.readline(), variables.ENCODING).strip()
+                if entry != status:
+                    print(entry)
+                    print(status)
+                    print('could not verify response')
                     successful = False
-                self.start_receiving_thread()
-        else:
-            self.ser.write(command)
+        time.sleep(0.2)
+        self.SEND_MESSAGE = False
+
         return successful
 
     def receive_messages(self):
-        while not self.COMMAND_SENDED:
-            if self.ser.in_waiting > 0:
-                raw_response = self.ser.readline()
-                print(raw_response)
-                self.handle_received_line(message=bytes_to_str(raw_response))
+        while True:
+            if not self.SEND_MESSAGE and self.ser.in_waiting > 0:
+                logging.debug('receiving')
+                self.handle_received_line(str(self.ser.readline(), variables.ENCODING))
 
     @abstractmethod
     def handle_received_line(self, message):
         print(message)
+        if 'hey' in message:
+            self.execute_command('AT')
 
-    def start_receiving_thread(self):
-        self.t = threading.Thread(target=self.receive_messages)
-        self.COMMAND_SENDED = False
-        self.t.start()
+        # self.execute_command('AT')
 
 
 if __name__ == '__main__':
-    lora_threaded = LoraConnectorThreadedSyncedResponse()
-    lora_threaded.start_receiving_thread()
+    logging.basicConfig(level=logging.DEBUG)
+    ser = serial.serial_for_url('/dev/ttyS0', baudrate=115200, timeout=5)
+    lora_threaded = LoraConnectorThreaded(ser)
+    t = threading.Thread(target=lora_threaded.receive_messages)
+    t.start()
     time.sleep(1)
-    lora_threaded.execute_command("AT", verify_response_list=['AT,OK'])
+    lora_threaded.execute_command('AT+SEND=2')
+    lora_threaded.execute_command("hey")
+    lora_threaded.execute_command('AT+SEND=2')
+    lora_threaded.execute_command("hey")
+    lora_threaded.execute_command('AT+SEND=2')
+    lora_threaded.execute_command("hey")
+    lora_threaded.execute_command('AT+SEND=2')
+    lora_threaded.execute_command("hey")

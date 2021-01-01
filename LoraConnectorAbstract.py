@@ -13,20 +13,17 @@ def str_to_bytes(string_to_convert):
 
 class LoraConnectorAbstract:
 
-    def __init__(self, ser_conn):
-        self.ser = ser_conn
-
     @abstractmethod
     def execute_command(self, command):
         ...
 
-    @abstractmethod
-    def receive_messages(self):
-        ...
-
-    @abstractmethod
-    def handle_received_line(self, message):
-        ...
+    # @abstractmethod
+    # def receive_messages(self):
+    #     ...
+    #
+    # @abstractmethod
+    # def handle_line(self, message):
+    #     ...
 
     def config_module(self, save_config=True):
         for command in variables.CONFIG_COMMAND_LIST:
