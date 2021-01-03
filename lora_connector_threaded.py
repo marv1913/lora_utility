@@ -13,6 +13,7 @@ lock = threading.Lock()
 
 class LoraConnectorThreaded:
     SEND_MESSAGE = False
+    RECEIVING_MESSAGES = True
 
     def __init__(self, ser_conn):
         logging.debug('instantiated LoraConnector')
@@ -37,7 +38,7 @@ class LoraConnectorThreaded:
         return successful
 
     def receive_messages(self):
-        while True:
+        while self.RECEIVING_MESSAGES:
             if not self.SEND_MESSAGE and self.ser.in_waiting > 0:
                 logging.debug('receiving')
                 self.handle_received_line(str(self.ser.readline(), variables.ENCODING))
@@ -50,6 +51,9 @@ class LoraConnectorThreaded:
 
         # self.execute_command('AT')
 
+    def stop(self):
+        logging.debug('stopping receiving thread...')
+        self.RECEIVING_MESSAGES = False
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG)

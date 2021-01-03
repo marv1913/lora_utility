@@ -22,6 +22,7 @@ def create_header_obj_from_raw_message(raw_message):
     check_addr_field(received_from, 'received_from')
 
     header_str = get_raw_message_as_list(raw_message)[3]
+    header_str = header_str.strip()
 
     source = header_str[0:4]
     check_addr_field(source, 'source')
@@ -35,7 +36,9 @@ def create_header_obj_from_raw_message(raw_message):
     ttl = header_str[10:12]
     check_two_digit_int_field(ttl)
 
-    if flag == RouteRequestHeader.HEADER_TYPE :
+    if flag == RouteRequestHeader.HEADER_TYPE:
+        if len(header_str) != RouteRequestHeader.LENGTH:
+            raise ValueError('header too long')
         hops = header_str[16:18]
         check_two_digit_int_field(hops)
         requested_node = header_str[12:16]

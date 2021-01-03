@@ -1,12 +1,12 @@
 import logging
 import time
 
-import serial
-
-import main
 import variables
-from protocol_lite import ProtocolLite
+from consumer_producer import ProducerThread, ConsumerThread
+
 from prettytable import PrettyTable
+
+from protocol_lite_two import ProtocolLite
 
 
 class Messenger():
@@ -86,19 +86,13 @@ class Messenger():
 
 
 if __name__ == '__main__':
-    # lora_conn.config_module()
-
-    # response = lora_conn.send_message('ja', wait_for_answer=True)
-    #
-    # while True:
-    #     lora_conn.wait_for_message()
     logging.basicConfig(level=logging.DEBUG)
-    ser = serial.serial_for_url('/dev/ttyS0', baudrate=115200, timeout=30)
-    protocol = ProtocolLite(ser)
-    # protocol.send_message('0137', 'hey')
+
+    protocol = ProtocolLite()
 
     messenger = Messenger(protocol)
     protocol.set_messenger(messenger)
-
+    time.sleep(3)
 
     messenger.start_chatting()
+

@@ -7,53 +7,63 @@ from contextlib import contextmanager
 import serial
 from serial.threaded import ReaderThread
 
+import consumer_producer
 import variables
 import header
 from lora_connector_threaded import LoraConnectorThreaded
 from routing_table import RoutingTable
 
 
-class ProtocolLite(LoraConnectorThreaded):
+class ProtocolLite():
     WAITING_FOR_ROUTE_REPLY = False
 
-    def __init__(self, ser_conn):
-        super().__init__(ser_conn)
+    def __init__(self):
+
         logging.info('created protocol obj: {}'.format(str(self)))
         self.routing_table = RoutingTable()
         # self.start_receiving_thread()
         self.messenger = None
-        receiving_thread = threading.Thread(target=self.receive_messages)
+        receiving_thread = threading.Thread(target=self.process_incoming_message)
         receiving_thread.start()
+        p = consumer_producer.ProducerThread(name='producer')
+        c = consumer_producer.ConsumerThread(name='consumer')
 
-    def handle_received_line(self, data):
-        self.process_incoming_message(data)
-        # self.send_message('0139', 'hey')
+        p.start()
+        time.sleep(0.5)
+        c.start()
+        time.sleep(0.5)
+
 
     def set_messenger(self, messenger):
         self.messenger = messenger
 
     def send_header(self, header_str):
+        consumer_producer.q.put(('AT+SEND={}'.format(str(len(header_str))), ['AT,OK']))
+        consumer_producer.q.put((header_str, ['AT,SENDING', 'AT,SENDED']))
 
-        if self.execute_command('AT+SEND={}'.format(str(len(header_str))), verify_response_list=['AT,OK']):
-            logging.debug('sending {}'.format(header_str))
-            time.sleep(1)
-            if self.execute_command(header_str, verify_response_list=['AT,SENDING', 'AT,SENDED']):
-                logging.debug('sended')
+        # if self.execute_command('AT+SEND={}'.format(str(len(header_str))), verify_response_list=['AT,OK']):
+        #     logging.debug('sending {}'.format(header_str))
+        #     time.sleep(1)
+        #     if self.execute_command(header_str, verify_response_list=['AT,SENDING', 'AT,SENDED']):
+        #         logging.debug('sended')
 
-    def process_incoming_message(self, raw_message):
-        try:
-            header_obj = header.create_header_obj_from_raw_message(raw_message)
-            self.routing_table.add_neighbor_to_routing_table(header_obj)
-            if header_obj.flag == header.RouteRequestHeader.HEADER_TYPE:
-                if self.WAITING_FOR_ROUTE_REPLY:
-                    logging.debug('cannot process route request message, because waiting for route reply message')
-                    return
-                self.process_route_request(header_obj)
-            elif header_obj.flag == header.MessageHeader.HEADER_TYPE:
-                self.process_message_header(header_obj)
+    def process_incoming_message(self):
+        while True:
+            if not consumer_producer.response_q.empty():
+                raw_message = consumer_producer.response_q.get()
+                try:
+                    header_obj = header.create_header_obj_from_raw_message(raw_message)
+                    self.routing_table.add_neighbor_to_routing_table(header_obj)
+                    if header_obj.flag == header.RouteRequestHeader.HEADER_TYPE:
+                        # if self.WAITING_FOR_ROUTE_REPLY:
+                        #     logging.debug('cannot process route request message, because waiting for route reply message')
+                        #     return
+                        self.process_route_request(header_obj)
+                    elif header_obj.flag == header.MessageHeader.HEADER_TYPE:
+                        self.process_message_header(header_obj)
 
-        except ValueError as e:
-            logging.warning(str(e))
+                except ValueError as e:
+                    logging.warning(str(e))
 
     def send_message(self, destination, payload):
         best_route = self.routing_table.get_best_route_for_destination(destination)

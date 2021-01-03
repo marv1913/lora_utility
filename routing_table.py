@@ -28,6 +28,8 @@ class RoutingTable:
         self.add_routing_table_entry(received_from, received_from, 0)
 
     def get_best_route_for_destination(self, destination):
+        if destination not in variables.AVAILABLE_NODES:
+            raise ValueError("destination address '{}' does not exist".format(destination))
         list_of_available_routes = []
         for entry in self.routing_table:
             if entry['destination'] == destination:
