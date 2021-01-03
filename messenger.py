@@ -78,12 +78,4 @@ class Messenger:
 
 
 
-if __name__ == '__main__':
-    logging.basicConfig(level=logging.DEBUG)
 
-    protocol = ProtocolLite()
-
-    messenger = Messenger(protocol)
-    time.sleep(4)
-
-    messenger.start_chatting()

@@ -93,29 +93,31 @@ class ProtocolLite:
                     return False
 
     def process_route_request(self, header_obj):
-        # first of all look whether requested node is myself
-        if header_obj.requested_node == variables.MY_ADDRESS:
-            #      send route reply
-            # route_reply_header = header.RouteReplyHeader(None, variables.MY_ADDRESS, )
-            logging.info('sending route reply message...')
-            self.send_route_reply(previous_node=header_obj.received_from, end_node=header_obj.source)
-        else:
-            if len(self.routing_table.get_best_route_for_destination(header_obj.source)) == 0:
-                # if there is no entry for source of route request, you can add routing table entry
-                self.routing_table.add_routing_table_entry(header_obj.source, header_obj.received_from, header_obj.hops)
-            # # if header_obj.requested_node not myself look whether there is a route to requested node
-            # best_route = self.routing_table.get_best_route_for_destination(header_obj.requested_node)
-            # if len(best_route) == 0:
-            #     logging.info(
-            #         'could not find a route to {} to forward route request message'.format(header_obj.requested_node))
-            # else:
-            #     pass
+        # first of all check whether source of route request is myself (to prevent cycle)
+        if header_obj.source != variables.MY_ADDRESS:
+            # look whether requested node is myself
+            if header_obj.requested_node == variables.MY_ADDRESS:
+                #      send route reply
+                # route_reply_header = header.RouteReplyHeader(None, variables.MY_ADDRESS, )
+                logging.info('sending route reply message...')
+                self.send_route_reply(previous_node=header_obj.received_from, end_node=header_obj.source)
+            else:
+                if len(self.routing_table.get_best_route_for_destination(header_obj.source)) == 0:
+                    # if there is no entry for source of route request, you can add routing table entry
+                    self.routing_table.add_routing_table_entry(header_obj.source, header_obj.received_from, header_obj.hops)
+                # # if header_obj.requested_node not myself look whether there is a route to requested node
+                # best_route = self.routing_table.get_best_route_for_destination(header_obj.requested_node)
+                # if len(best_route) == 0:
+                #     logging.info(
+                #         'could not find a route to {} to forward route request message'.format(header_obj.requested_node))
+                # else:
+                #     pass
 
-            # if header_obj.requested_node not myself forward route request to known neighbors
-            # decrease ttl
-            header_obj.ttl = header_obj.ttl - 1
-            header_obj.hops = header_obj.hops + 1
-            self.send_header(header_obj.get_header_str())
+                # if header_obj.requested_node not myself forward route request to known neighbors
+                # decrease ttl
+                header_obj.ttl = header_obj.ttl - 1
+                header_obj.hops = header_obj.hops + 1
+                self.send_header(header_obj.get_header_str())
 
     def send_route_reply(self, previous_node, end_node):
         route_reply_header_obj = header.RouteReplyHeader(None, variables.MY_ADDRESS, 'FFFF', 10, previous_node,
