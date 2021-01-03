@@ -2,21 +2,19 @@ import logging
 import time
 
 import variables
-from consumer_producer import ProducerThread, ConsumerThread
 
 from prettytable import PrettyTable
 
 from protocol_lite_two import ProtocolLite
 
 
-class Messenger():
+class Messenger:
     CONFIG_MODE = 0
     SEND_MODE = 1
     LIST_MODE = 2
     MODE = SEND_MODE
     # DESTINATION_ADDRESS = None
     DESTINATION_ADDRESS = '0131'
-
 
     def __init__(self, protocol):
         self.protocol = protocol
@@ -28,6 +26,7 @@ class Messenger():
             self.protocol.send_message('0131', text)
 
     def start_chatting(self):
+        print(variables.WELCOME_TEXT)
         print("type 'help' to see how this program works:\n")
         active = True
         while active:
@@ -36,23 +35,18 @@ class Messenger():
                 active = False
                 self.protocol.stop()
             elif text == 'help':
-                print('here you could get some support')
+                self.print_help_text()
+            elif text == ':l':
+                self.print_routing_table()
             elif ':' in text:
-                # in config mode
-                if text == ':c':
-                    self.MODE = self.CONFIG_MODE
-                    self.print_mode()
-                elif text == ':s':
-                    self.MODE = self.SEND_MODE
-                    self.print_mode()
-                elif text == ':l':
-                    self.MODE = self.LIST_MODE
-                    self.print_mode()
-                else:
-                    print("mode '{}' does not exist".format(text))
+                self.change_mode(text)
             else:
                 if self.MODE == self.CONFIG_MODE:
-                    if text not in variables.AVAILABLE_NODES:
+                    if text == '?':
+                        print('current destination address: {}'.format(self.DESTINATION_ADDRESS))
+                    elif text == 'all':
+                        print(variables.AVAILABLE_NODES)
+                    elif text not in variables.AVAILABLE_NODES:
                         print("address '{}' is not available".format(text))
                     else:
                         self.DESTINATION_ADDRESS = text
@@ -62,15 +56,26 @@ class Messenger():
                         print('enter config mode and set destination address before sending first message')
                     else:
                         self.protocol.send_message(self.DESTINATION_ADDRESS, text)
-                elif self.MODE == self.LIST_MODE:
-                    if text == 'show':
-                        self.print_routing_table()
 
-    def print_mode(self):
+    def change_mode(self, text):
+        if text == ':c':
+            self.MODE = self.CONFIG_MODE
+        elif text == ':s':
+            self.MODE = self.SEND_MODE
+        elif text == ':l':
+            self.MODE = self.LIST_MODE
+        else:
+            print("mode '{}' does not exist".format(text))
+            return
+        self.__print_mode()
+
+    def __print_mode(self):
         if self.MODE == self.CONFIG_MODE:
             print('config mode entered')
         if self.MODE == self.SEND_MODE:
             print('send mode entered')
+        if self.MODE == self.LIST_MODE:
+            print('list mode entered')
 
     def print_routing_table(self):
         routing_table = self.protocol.routing_table.routing_table
@@ -78,11 +83,27 @@ class Messenger():
         table.field_names = ['destination', 'next_node', 'hops']
         for entry in routing_table:
             table.add_row(list(entry.values()))
+        for entry in self.protocol.routing_table.unsupported_devices:
+            table.add_row([entry, 'n/a', 'n/a'])
         print(table)
 
     def display_received_message(self, message_header_obj):
         print('received message from {source}: {payload}'.format(source=message_header_obj.source,
                                                                  payload=message_header_obj.payload))
+
+    def print_help_text(self):
+        print('\nthere are 2 modes:\n'
+              '     send mode   -   :s\n'
+              '     config mode -   :c\n\n'
+              'e.g. to enter the send mode type in ":s"\n\n'
+              'in send mode you can type in a text which is sended to the address which was set by the user\n'
+              ''
+              'in config mode you have three options:\n'
+              '     "all"   to see all available addresses\n'
+              '     "?"     to get set address\n'
+              '     type in a address to change destination address\n'
+              '\n'
+              'in each mode you can type ":l" to get the current routing table\n')
 
 
 if __name__ == '__main__':
@@ -92,7 +113,6 @@ if __name__ == '__main__':
 
     messenger = Messenger(protocol)
     protocol.set_messenger(messenger)
-    time.sleep(3)
+    time.sleep(1)
 
     messenger.start_chatting()
-

@@ -7,3 +7,6 @@ route_request from 0131 to 0139
 expected reply from 0139:
 0139FFFF04100131013100
 
+route request from 0133 to find 0134 from 0139
+0133 FFFF 03 09 0134 01
+

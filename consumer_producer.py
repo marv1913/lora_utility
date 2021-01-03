@@ -7,7 +7,7 @@ import serial
 
 import variables
 
-ser = serial.serial_for_url('/dev/ttyS0', baudrate=115200, timeout=30)
+ser = serial.serial_for_url('/dev/ttyS0', baudrate=115200, timeout=20)
 
 # read_file = 'C:/temp/temp1/simplified.txt'
 # log1 = open('C:/temp/temp1/simplified_log1.txt', "a+")
@@ -18,7 +18,11 @@ BUF_SIZE = 100
 q = queue.Queue(BUF_SIZE)
 BUF_SIZE = 1000
 response_q = queue.Queue(BUF_SIZE)
+BUF_SIZE = 1000
+status_q = queue.Queue(BUF_SIZE)
 WRITE_DATA = False
+PRODUCER_THREAD_ACTIVE = True
+CONSUMER_THREAD_ACTIVE = True
 
 
 def bytes_to_str(message_in_bytes):
@@ -28,13 +32,15 @@ def bytes_to_str(message_in_bytes):
 def str_to_bytes(string_to_convert):
     return bytes(string_to_convert, variables.ENCODING)
 
+
 class ProducerThread(threading.Thread):
     def __init__(self, name):
         super(ProducerThread, self).__init__()
         self.name = name
 
     def run(self):
-        while True:
+        global PRODUCER_THREAD_ACTIVE
+        while PRODUCER_THREAD_ACTIVE:
             global WRITE_DATA
             if q.empty() and not WRITE_DATA:
                 # print('reading')
@@ -55,7 +61,8 @@ class ConsumerThread(threading.Thread):
         return
 
     def run(self):
-        while True:
+        global CONSUMER_THREAD_ACTIVE
+        while CONSUMER_THREAD_ACTIVE:
             if not q.empty():
                 global WRITE_DATA
                 WRITE_DATA = True
@@ -66,14 +73,18 @@ class ConsumerThread(threading.Thread):
                 verify_list = command_tuple[1]
                 logging.debug("sending command '{}'".format(command))
                 ser.write(command)
+                successful = True
                 if len(verify_list) > 0:
                     for entry in verify_list:
                         status = bytes_to_str(ser.readline())
                         status = status.strip()
                         if entry != status:
-                            logging.warn('could not verify {expected} != {status}'.format(expected=entry, status=status))
+                            logging.warning(
+                                'could not verify {expected} != {status}'.format(expected=entry, status=status))
+                            status = False
                         else:
                             logging.debug('verified {status}'.format(status=status))
+                    status_q.put(successful)
 
                 time.sleep(0.2)
                 WRITE_DATA = False

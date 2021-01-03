@@ -7,12 +7,15 @@ class RoutingTable:
 
     def __init__(self):
         self.routing_table = []
+        self.unsupported_devices = []
 
     def add_routing_table_entry(self, destination, next_node, hops):
         new_routing_table_entry = {'destination': destination, 'next_node': next_node, 'hops': hops}
         if not self.check_routing_table_entry_exists(destination, next_node, hops):
             logging.debug('new entry in routing table: {}'. format(str(new_routing_table_entry)))
             self.routing_table.append(new_routing_table_entry)
+            if destination in self.unsupported_devices:
+                self.unsupported_devices.remove(destination)
         else:
             logging.debug('entry already exists: {}'.format(str(new_routing_table_entry)))
 
@@ -26,6 +29,10 @@ class RoutingTable:
         logging.debug('call add neighbor function')
         received_from = header_obj.received_from
         self.add_routing_table_entry(received_from, received_from, 0)
+
+    def add_neighbor_with_unsupported_protocol(self, address):
+        if address not in self.unsupported_devices:
+            self.unsupported_devices.append(address)
 
     def get_best_route_for_destination(self, destination):
         if destination not in variables.AVAILABLE_NODES:
