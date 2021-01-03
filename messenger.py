@@ -6,12 +6,13 @@ import variables
 from prettytable import PrettyTable
 
 import view
-from protocol_lite_two import ProtocolLite
+from protocol_lite import ProtocolLite
+
+__author__ = "Marvin Rausch"
 
 CONFIG_MODE = 0
 SEND_MODE = 1
 LIST_MODE = 2
-
 
 class Messenger:
     MODE = SEND_MODE
@@ -20,7 +21,6 @@ class Messenger:
 
     def __init__(self, protocol):
         self.protocol = protocol
-        self.protocol.set_messenger(self)
 
     def start_chatting(self):
         view.print_welcome_text()
@@ -84,7 +84,6 @@ if __name__ == '__main__':
     protocol = ProtocolLite()
 
     messenger = Messenger(protocol)
-    protocol.set_messenger(messenger)
-    time.sleep(1)
+    time.sleep(4)
 
     messenger.start_chatting()

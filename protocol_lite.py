@@ -10,6 +10,8 @@ import header
 import view
 from routing_table import RoutingTable
 
+__author__ = "Marvin Rausch"
+
 
 class ProtocolLite:
     PROCESS_INCOMING_MESSAGES = True
@@ -27,7 +29,6 @@ class ProtocolLite:
         time.sleep(0.5)
         c.start()
         time.sleep(0.5)
-
 
     def send_header(self, header_str):
         consumer_producer.q.put(('AT+SEND={}'.format(str(len(header_str))), ['AT,OK']))

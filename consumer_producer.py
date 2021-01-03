@@ -7,6 +7,8 @@ import serial
 
 import variables
 
+__author__ = "Marvin Rausch"
+
 ser = serial.serial_for_url('/dev/ttyS0', baudrate=115200, timeout=20)
 
 # read_file = 'C:/temp/temp1/simplified.txt'

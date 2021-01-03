@@ -2,6 +2,7 @@ import logging
 
 import variables
 
+__author__ = "Marvin Rausch"
 
 class RoutingTable:
 

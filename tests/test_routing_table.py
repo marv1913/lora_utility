@@ -1,5 +1,7 @@
 import unittest
 
+__author__ = "Marvin Rausch"
+
 from routing_table import RoutingTable
 
 
