@@ -7,6 +7,7 @@ from contextlib import contextmanager
 import consumer_producer
 import variables
 import header
+import view
 from routing_table import RoutingTable
 
 
@@ -15,10 +16,8 @@ class ProtocolLite:
     VERIFICATION_TIMEOUT = 25
 
     def __init__(self):
-
         logging.info('created protocol obj: {}'.format(str(self)))
         self.routing_table = RoutingTable()
-        self.messenger = None
         receiving_thread = threading.Thread(target=self.process_incoming_message)
         receiving_thread.start()
         p = consumer_producer.ProducerThread(name='producer')
@@ -29,9 +28,6 @@ class ProtocolLite:
         c.start()
         time.sleep(0.5)
 
-
-    def set_messenger(self, messenger):
-        self.messenger = messenger
 
     def send_header(self, header_str):
         consumer_producer.q.put(('AT+SEND={}'.format(str(len(header_str))), ['AT,OK']))
@@ -127,7 +123,7 @@ class ProtocolLite:
 
     def process_message_header(self, header_obj):
         if header_obj.destination == variables.MY_ADDRESS:
-            self.messenger.display_received_message(header_obj)
+            view.display_received_message(header_obj)
         elif header_obj.next_node == variables.MY_ADDRESS:
             best_route = self.routing_table.get_best_route_for_destination(header_obj.destination)
             if len(best_route) == 0:
