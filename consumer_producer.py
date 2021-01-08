@@ -45,11 +45,13 @@ class ProducerThread(threading.Thread):
         while PRODUCER_THREAD_ACTIVE:
             global WRITE_DATA
             if q.empty() and not WRITE_DATA:
-                # print('reading')
-
                 if ser.in_waiting:
-                    print('read')
-                    response_q.put(bytes_to_str(ser.readline()))
+                    logging.debug('read')
+                    received_raw_message = ser.readline()
+                    logging.debug('received: {}'.format(received_raw_message))
+
+                    received_raw_message = bytes_to_str(ser.readline())
+                    response_q.put(received_raw_message)
 
             # else:
             #     print('locked')

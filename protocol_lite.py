@@ -96,7 +96,7 @@ class ProtocolLite:
         # first of all check whether source of route request is myself (to prevent cycle)
         if header_obj.source != variables.MY_ADDRESS:
             # look whether requested node is myself
-            if header_obj.requested_node == variables.MY_ADDRESS:
+            if header_obj.end_node == variables.MY_ADDRESS:
                 #      send route reply
                 # route_reply_header = header.RouteReplyHeader(None, variables.MY_ADDRESS, )
                 logging.info('sending route reply message...')
