@@ -14,7 +14,7 @@ class HeaderTest(unittest.TestCase):
         self.assertRaises(ValueError, header.get_received_from_value, '')
 
     def test_create_route_request_header_obj_good(self):
-        header_obj = header.create_header_obj_from_raw_message('LR,0136,10,013730840138')
+        header_obj = header.create_header_obj_from_raw_message('LR,0136,10,01373840138')
         self.assertEqual(header_obj.source, '0137')
         self.assertEqual(header_obj.flag, 3)
         self.assertEqual(header_obj.ttl, 8)
@@ -22,13 +22,13 @@ class HeaderTest(unittest.TestCase):
         self.assertEqual(header_obj.hops, 4)
 
     def test_create_route_request_header_obj_bad_hops_missing(self):
-        self.assertRaises(ValueError, header.create_header_obj_from_raw_message, 'LR,0136,10,01373080138')
+        self.assertRaises(ValueError, header.create_header_obj_from_raw_message, 'LR,0136,10,0137380138')
 
     def test_create_route_request_header_bad_to_many_args(self):
-        self.assertRaises(ValueError, header.create_header_obj_from_raw_message, 'LR,0136,10,0137308401380')
+        self.assertRaises(ValueError, header.create_header_obj_from_raw_message, 'LR,0136,10,013738401380')
 
     def test_create_route_reply_header_obj_good(self):
-        header_obj = header.create_header_obj_from_raw_message('LR,0136,10,0137408301390140')
+        header_obj = header.create_header_obj_from_raw_message('LR,0136,10,013748301390140')
         self.assertEqual(header_obj.source, '0137')
         self.assertEqual(header_obj.received_from, '0136')
         self.assertEqual(header_obj.end_node, '0139')
@@ -38,10 +38,10 @@ class HeaderTest(unittest.TestCase):
         self.assertEqual(header_obj.hops, 3)
 
     def test_create_route_reply_header_obj_bad_invalid_flag(self):
-        self.assertRaises(ValueError, header.create_header_obj_from_raw_message, '0137808301390140')
+        self.assertRaises(ValueError, header.create_header_obj_from_raw_message, '013788301390140')
 
     def test_create_message_header_obj_good(self):
-        header_obj = header.create_header_obj_from_raw_message('LR,0136,10,013510301380137hello')
+        header_obj = header.create_header_obj_from_raw_message('LR,0136,10,01351301380137hello')
         self.assertEqual(header_obj.source, '0135')
         self.assertEqual(header_obj.destination, '0138')
         self.assertEqual(header_obj.flag, 1)
@@ -50,18 +50,8 @@ class HeaderTest(unittest.TestCase):
         self.assertEqual(header_obj.payload, 'hello')
         self.assertEqual(header_obj.received_from, '0136')
 
-    def test_create_message_header_obj_good2(self):
-        header_obj = header.create_header_obj_from_raw_message('LR,0136,10,013511001380137hello')
-        self.assertEqual(header_obj.source, '0135')
-        self.assertEqual(header_obj.destination, '0138')
-        self.assertEqual(header_obj.flag, 1)
-        self.assertEqual(header_obj.ttl, 10)
-        self.assertEqual(header_obj.next_node, '0137')
-        self.assertEqual(header_obj.payload, 'hello')
-        self.assertEqual(header_obj.received_from, '0136')
-
     def test_create_message_header_obj_bad_payload_missing(self):
-        self.assertRaises(ValueError, header.create_header_obj_from_raw_message, 'LR,0136,10,013511001380137')
+        self.assertRaises(ValueError, header.create_header_obj_from_raw_message, 'LR,0136,10,01351101380137')
 
     def test_create_header_obj_bad_message_without_header(self):
         self.assertRaises(ValueError, header.create_header_obj_from_raw_message, 'LR,FFFF,0A,hello')

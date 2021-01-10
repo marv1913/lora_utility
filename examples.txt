@@ -1,12 +1,15 @@
-route_reply from 0131 to 0139
-0131FFFF04100139013900
+route_reply from 0139 to 0137
+0139 4 9 1 0137 0137
+0137 4 8 3 0139 0140
 
-route_request from 0131 to 0139
-0131FFFF0310013900
+route_request from 0139 to 0137
+0139 3 9 1 0137
 
 expected reply from 0139:
-0139FFFF04100131013100
+0137 4 9 1 0139 0139
 
-route request from 0133 to find 0134 from 0139
-0133 FFFF 03 09 0134 01
+route request from 0139 to find 0134
+01393910134
 
+message from 0137 to 0139
+0137 1 9 0139 0139 hello

@@ -1,4 +1,6 @@
+
 import logging
+import time
 
 import variables
 
@@ -9,6 +11,7 @@ class RoutingTable:
     def __init__(self):
         self.routing_table = []
         self.unsupported_devices = []
+        self.processed_route_requests = []
 
     def add_routing_table_entry(self, destination, next_node, hops):
         new_routing_table_entry = {'destination': destination, 'next_node': next_node, 'hops': hops}
@@ -29,7 +32,7 @@ class RoutingTable:
     def add_neighbor_to_routing_table(self, header_obj):
         logging.debug('call add neighbor function')
         received_from = header_obj.received_from
-        self.add_routing_table_entry(received_from, received_from, 0)
+        self.add_routing_table_entry(received_from, received_from, 1)
 
     def add_neighbor_with_unsupported_protocol(self, address):
         if address not in self.unsupported_devices:
@@ -62,4 +65,27 @@ class RoutingTable:
             if len(best_route) != 0:
                 best_routes.append(best_route)
         return best_routes
+
+    def add_address_to_processed_requests_list(self, address):
+        for address_dict in self.processed_route_requests:
+            if address_dict['address'] == address:
+                return
+        self.processed_route_requests.append({'address': address, 'time': time.time()})
+
+    def __clean_already_processed_requests_list(self):
+        current_time = time.time()
+        cleaned_list = []
+        for address_dict in self.processed_route_requests:
+            if current_time - address_dict['time'] < variables.PROCESSED_ROUTE_REQUEST_TIMEOUT:
+                cleaned_list.append(address_dict)
+        self.processed_route_requests = cleaned_list
+
+    def check_route_request_already_processed(self, address):
+        self.__clean_already_processed_requests_list()
+        for address_dict in self.processed_route_requests:
+            if address_dict['address'] == address:
+                return True
+        return False
+
+
 

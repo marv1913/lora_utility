@@ -50,7 +50,7 @@ class ProducerThread(threading.Thread):
                     received_raw_message = ser.readline()
                     logging.debug('received: {}'.format(received_raw_message))
 
-                    received_raw_message = bytes_to_str(ser.readline())
+                    received_raw_message = bytes_to_str(received_raw_message)
                     response_q.put(received_raw_message)
 
             # else:

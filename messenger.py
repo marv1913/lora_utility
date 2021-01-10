@@ -14,13 +14,14 @@ CONFIG_MODE = 0
 SEND_MODE = 1
 LIST_MODE = 2
 
+
 class Messenger:
     MODE = SEND_MODE
     # DESTINATION_ADDRESS = None
-    DESTINATION_ADDRESS = '0131'
+    DESTINATION_ADDRESS = '0139'
 
-    def __init__(self, protocol):
-        self.protocol = protocol
+    def __init__(self, protocol_obj):
+        self.protocol = protocol_obj
 
     def start_chatting(self):
         view.print_welcome_text()

@@ -1,5 +1,5 @@
 import logging
-from datetime import time
+import time
 
 from messenger import Messenger
 from protocol_lite import ProtocolLite
@@ -13,5 +13,6 @@ if __name__ == '__main__':
     time.sleep(4)
 
     messenger.start_chatting()
+
 
     # TODO implement function to config lora module before launching UI and get own address from module
