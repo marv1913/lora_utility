@@ -16,19 +16,23 @@ __author__ = "Marvin Rausch"
 class ProtocolLite:
     PROCESS_INCOMING_MESSAGES = True
     VERIFICATION_TIMEOUT = 25
+    PAUSE_PROCESSING_INCOMING_MESSAGES = False
 
     def __init__(self):
         logging.info('created protocol obj: {}'.format(str(self)))
         self.routing_table = RoutingTable()
+
+        # p = consumer_producer.ProducerThread(name='producer')
+        # c = consumer_producer.ConsumerThread(name='consumer')
+        #
+        # p.start()
+        # time.sleep(0.5)
+        # c.start()
+        # time.sleep(0.5)
+
+    def start_protocol_thread(self):
         receiving_thread = threading.Thread(target=self.process_incoming_message)
         receiving_thread.start()
-        p = consumer_producer.ProducerThread(name='producer')
-        c = consumer_producer.ConsumerThread(name='consumer')
-
-        p.start()
-        time.sleep(0.5)
-        c.start()
-        time.sleep(0.5)
 
     def send_header(self, header_str):
         consumer_producer.q.put(('AT+SEND={}'.format(str(len(header_str))), ['AT,OK']))
@@ -41,7 +45,7 @@ class ProtocolLite:
 
     def process_incoming_message(self):
         while self.PROCESS_INCOMING_MESSAGES:
-            if not consumer_producer.response_q.empty():
+            if not consumer_producer.response_q.empty() and not self.PAUSE_PROCESSING_INCOMING_MESSAGES:
                 raw_message = consumer_producer.response_q.get()
 
                 try:
@@ -78,7 +82,7 @@ class ProtocolLite:
         self.send_header(header_obj.get_header_str())
 
     def send_route_request_message(self, end_node):
-        route_request_header_obj = header.RouteRequestHeader(None, variables.MY_ADDRESS, variables.DEFAULT_TTL, 1,
+        route_request_header_obj = header.RouteRequestHeader(None, variables.MY_ADDRESS, variables.DEFAULT_TTL, 0,
                                                              end_node)
         self.send_header(route_request_header_obj.get_header_str())
         with timeout(variables.ROUTE_REQUEST_TIMEOUT):
@@ -132,8 +136,8 @@ class ProtocolLite:
                 #             # self.send_route_error(header_obj.end_node)
 
     def send_route_reply(self, next_node, end_node):
-        route_reply_header_obj = header.RouteReplyHeader(None, variables.MY_ADDRESS, variables.DEFAULT_TTL, 1,
-                                                         end_node, next_node)
+        route_reply_header_obj = header.RouteReplyHeader(None, variables.MY_ADDRESS, variables.DEFAULT_TTL, 0, end_node,
+                                                         next_node)
         self.send_header(route_reply_header_obj.get_header_str())
 
     def process_message_header(self, header_obj):
@@ -172,7 +176,7 @@ class ProtocolLite:
                 # send route error, because there is no route to forward route reply message to
                 # source node of route request
                 logging.info(
-                    'can not forward route reply message, ,because there is no route to forward route reply message to')
+                    'can not forward route reply message, because there is no route to forward route reply message to')
                 # source node of route request')
                 # self.send_route_error(header_obj.source)
 

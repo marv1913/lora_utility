@@ -1,27 +1,23 @@
 import logging
 
 import consumer_producer
-import header
 import variables
 
 
-class ModuleConfig:
+def config_module(configuration=variables.MODULE_CONFIG):
+    configuration = configuration + '\r\n'
+    if consumer_producer.execute_command(configuration, [variables.STATUS_OK]):
+        logging.debug('module config successfully set')
+        return True
+    logging.warning("could not set module config")
+    return False
 
-    def __init__(self, ser):
-        self.ser = ser
 
-    def config_module(self, configuration=variables.MODULE_CONFIG):
-        configuration = configuration + '\r\n'
-        configuration = consumer_producer.str_to_bytes(configuration)
-        self.ser.write(configuration)
-        status = self.ser.readline()
-        status = consumer_producer.bytes_to_str(status).strip()
-        logging.debug('status after setting config: {}'.format(status))
-        if status == variables.STATUS_OK:
-            logging.debug('module config successfully set')
-            return True
-        logging.warning("could not set module config")
-        return False
-
-    def get_current_address(self,):
-        raise NotImplementedError()
+def get_current_address():
+    consumer_producer.execute_command(variables.GET_ADDR)
+    addr = consumer_producer.response_q.get(variables.COMMAND_VERIFICATION_TIMEOUT)
+    print(addr)
+    addr_as_list = addr.split(variables.LORA_MODULE_DELIMITER)
+    if addr_as_list[0].strip() != 'AT' or addr_as_list[2].strip() != 'OK':
+        raise ValueError('could not get address of module')
+    return addr_as_list[1]

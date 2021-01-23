@@ -1,6 +1,7 @@
 import logging
 import time
 
+import consumer_producer
 from messenger import Messenger
 from protocol_lite import ProtocolLite
 
@@ -9,6 +10,7 @@ if __name__ == '__main__':
 
     # module_conf = ModuleConfig(consumer_producer.ser)
     # module_conf.config_module()
+    consumer_producer.start_send_receive_threads()
 
     protocol = ProtocolLite()
 

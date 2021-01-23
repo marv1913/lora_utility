@@ -85,13 +85,31 @@ class ConsumerThread(threading.Thread):
                         if entry != status:
                             logging.warning(
                                 'could not verify {expected} != {status}'.format(expected=entry, status=status))
-                            status = False
+                            successful = False
                         else:
                             logging.debug('verified {status}'.format(status=status))
                     status_q.put(successful)
 
                 time.sleep(0.2)
                 WRITE_DATA = False
+
+
+def start_send_receive_threads():
+    t1 = ProducerThread(name='producer')
+    t2 = ConsumerThread(name='consumer')
+
+    t1.start()
+    time.sleep(0.5)
+    t2.start()
+    time.sleep(0.5)
+
+
+def execute_command(command_as_str, verification_list=None):
+    if verification_list is None:
+        verification_list = []
+    q.put((command_as_str, verification_list))
+    if len(verification_list) != 0:
+        return status_q.get(timeout=variables.COMMAND_VERIFICATION_TIMEOUT)
 
 
 if __name__ == '__main__':

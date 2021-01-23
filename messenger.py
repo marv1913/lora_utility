@@ -6,6 +6,7 @@ import variables
 from prettytable import PrettyTable
 
 import view
+import module_config
 from protocol_lite import ProtocolLite
 
 __author__ = "Marvin Rausch"
@@ -17,11 +18,13 @@ LIST_MODE = 2
 
 class Messenger:
     MODE = SEND_MODE
-    # DESTINATION_ADDRESS = None
-    DESTINATION_ADDRESS = '0135'
+    DESTINATION_ADDRESS = '0138'
 
     def __init__(self, protocol_obj):
+        variables.MY_ADDRESS = module_config.get_current_address()
+        logging.info('loaded address of module: {}'.format(variables.MY_ADDRESS))
         self.protocol = protocol_obj
+        self.protocol.start_protocol_thread()
 
     def start_chatting(self):
         view.print_welcome_text()
@@ -43,6 +46,15 @@ class Messenger:
                         print('current destination address: {}'.format(self.DESTINATION_ADDRESS))
                     elif text == 'all':
                         print(variables.AVAILABLE_NODES)
+                    elif text == 'config':
+                        self.protocol.PAUSE_PROCESSING_INCOMING_MESSAGES = True
+                        module_config.config_module()
+                        # if self.module_config.config_module():
+                        #     print('module successfully configured')
+                        # else:
+                        #     print('could not change module config')
+                        time.sleep(4)
+                        self.protocol.PAUSE_PROCESSING_INCOMING_MESSAGES = False
                     elif text not in variables.AVAILABLE_NODES:
                         print("address '{}' is not available".format(text))
                     else:

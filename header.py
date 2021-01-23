@@ -90,6 +90,10 @@ def check_addr_field(addr_str, field_name):
             "header field '{field_name}' has an unexpected format: {addr_str}".format(field_name=field_name,
                                                                                       addr_str=addr_str))
 
+def get_received_from_value(raw_message):
+    received_from = raw_message.split(variables.LORA_MODULE_DELIMITER)[1]
+    check_addr_field(received_from)
+    return received_from
 
 def get_flag_from_raw_message(raw_message):
     """
