@@ -4,9 +4,12 @@ import variables
 
 __author__ = "Marvin Rausch"
 
+EXPECTED_VALUE_COUNT_ROUTE_REQUEST_HEADER = 5
+EXPECTED_VALUE_COUNT_ROUTE_REPLY_HEADER = 6
+EXPECTED_VALUE_COUNT_MESSAGE_HEADER = 6
+
 
 class Header:
-    MIN_LENGTH_RAW_MESSAGE = 16
 
     def __init__(self, received_from, source, flag, ttl):
         # address of node where the message comes from (LR,{addr},...)
@@ -17,53 +20,63 @@ class Header:
 
 
 def create_header_obj_from_raw_message(raw_message):
-    raw_message_as_list = raw_message.split(variables.HEADER_DELIMITER)
+    try:
+        raw_message_as_list = raw_message.split(variables.LORA_MODULE_DELIMITER)
 
-    received_from = raw_message_as_list[1]
-    check_addr_field(received_from, 'received_from')
+        received_from = raw_message_as_list[1]
+        check_addr_field(received_from, 'received_from')
 
-    header_str = raw_message_as_list[3]
-    # header_str = header_str.strip()
+        header_str = raw_message_as_list[3]
+        # header_str = header_str.strip()
 
-    header_as_list = header_str.strip()
+        header_as_list = header_str.split(variables.HEADER_DELIMITER)
+        del header_as_list[0]  # remove first and last element, because they are empty strings (delimiter without values)
+        del header_as_list[len(header_as_list)-1]  # remove first and last element, because they are empty strings (delimiter without values)
 
-    source = header_str[0:4]
-    check_addr_field(source, 'source')
 
-    ttl = header_str[5:6]
-    check_int_field(ttl)
+        source = header_as_list[0]
+        check_addr_field(source, 'source')
 
-    if flag == MessageHeader.HEADER_TYPE:
-        destination = header_str[6:10]
-        if destination not in variables.AVAILABLE_NODES:
-            raise ValueError(
-                "unknown destination: {destination} \n available destinations are {available_destinations}".format(
-                    destination=destination, available_destinations=str(variables.AVAILABLE_NODES)))
+        flag = header_as_list[1]
+        check_int_field(flag)
+        flag = int(flag)
 
-        next_node = header_str[10:14]
-        check_addr_field(next_node, 'next_node')
-        payload = header_str[14:]
-        if len(payload) == 0:
-            raise ValueError('payload is empty!')
-        return MessageHeader(received_from, source, ttl, destination, next_node, payload)
-    elif flag == RouteRequestHeader.HEADER_TYPE or flag == RouteReplyHeader.HEADER_TYPE:
-        # it is a route request or a route reply header
-        hops = header_str[6:7]
-        check_int_field(hops)
+        ttl = header_as_list[2]
+        check_int_field(ttl)
 
-        end_node = header_str[7:11]
-        check_addr_field(end_node, 'end_node')
+        if flag == MessageHeader.HEADER_TYPE:
+            destination = header_as_list[3]
+            if destination not in variables.AVAILABLE_NODES:
+                raise ValueError(
+                    "unknown destination: {destination} \n available destinations are {available_destinations}".format(
+                        destination=destination, available_destinations=str(variables.AVAILABLE_NODES)))
 
-        if flag == RouteRequestHeader.HEADER_TYPE:
-            if len(header_str) != RouteRequestHeader.LENGTH:
-                raise ValueError('route request header has an unexpected length')
-            return RouteRequestHeader(received_from, source, ttl, hops, end_node)
+            next_node = header_as_list[4]
+            check_addr_field(next_node, 'next_node')
+            payload = header_as_list[5]
+            if len(payload) == 0:
+                raise ValueError('payload is empty!')
+            return MessageHeader(received_from, source, ttl, destination, next_node, payload)
+        elif flag == RouteRequestHeader.HEADER_TYPE or flag == RouteReplyHeader.HEADER_TYPE:
+            # it is a route request or a route reply header
+            hops = header_as_list[3]
+            check_int_field(hops)
 
-        next_node = header_str[11:15]
-        check_addr_field(next_node, 'next_node')
+            end_node = header_as_list[4]
+            check_addr_field(end_node, 'end_node')
 
-        return RouteReplyHeader(received_from, source, ttl, hops, end_node, next_node)
-    raise ValueError("flag '{}' is not a valid flag".format(flag))
+            if flag == RouteRequestHeader.HEADER_TYPE:
+                if len(header_as_list) != EXPECTED_VALUE_COUNT_ROUTE_REQUEST_HEADER:
+                    raise ValueError('route request header has an unexpected length')
+                return RouteRequestHeader(received_from, source, ttl, hops, end_node)
+
+            next_node = header_as_list[5]
+            check_addr_field(next_node, 'next_node')
+
+            return RouteReplyHeader(received_from, source, ttl, hops, end_node, next_node)
+        raise ValueError("flag '{}' is not a valid flag".format(flag))
+    except IndexError:
+        raise ValueError("header has an unexpected length")
 
 
 def check_int_field(two_digit_value_str, length=1):
