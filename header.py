@@ -17,13 +17,15 @@ class Header:
 
 
 def create_header_obj_from_raw_message(raw_message):
-    flag = get_flag_from_raw_message(raw_message)
+    raw_message_as_list = raw_message.split(variables.HEADER_DELIMITER)
 
-    received_from = get_received_from_value(raw_message)
+    received_from = raw_message_as_list[1]
     check_addr_field(received_from, 'received_from')
 
-    header_str = get_raw_message_as_list(raw_message)[3]
-    header_str = header_str.strip()
+    header_str = raw_message_as_list[3]
+    # header_str = header_str.strip()
+
+    header_as_list = header_str.strip()
 
     source = header_str[0:4]
     check_addr_field(source, 'source')
@@ -74,19 +76,6 @@ def check_addr_field(addr_str, field_name):
         raise ValueError(
             "header field '{field_name}' has an unexpected format: {addr_str}".format(field_name=field_name,
                                                                                       addr_str=addr_str))
-
-
-def get_received_from_value(raw_message):
-    """
-    get source of message (physical source - value after LR,..)
-    :param raw_message: message where to search for 'received_from' value
-    :return: source of message as str
-    """
-    response_as_list = get_raw_message_as_list(raw_message)
-    if response_as_list[0] == 'LR':
-        return response_as_list[1]
-    else:
-        raise ValueError('header has a unexpected format: {}'.format(raw_message))
 
 
 def get_flag_from_raw_message(raw_message):
