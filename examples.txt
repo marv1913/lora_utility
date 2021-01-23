@@ -1,6 +1,5 @@
 route_reply from 0139 to 0137
 0139 4 9 1 0137 0137
-0137 4 8 3 0139 0140
 
 route_request from 0139 to 0137
 0139 3 9 1 0137

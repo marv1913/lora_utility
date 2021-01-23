@@ -132,7 +132,7 @@ class RouteRequestHeader(Header):
         return self.source + " " + self.flag + " " + str(self.ttl) + " " + str(self.hops) + " " + self.end_node
 
     def get_header_str(self):
-        return self.source + str(self.flag) + str(self.ttl) + str(self.hops) + self.end_node
+        return create_header_str(self.source, str(self.flag), str(self.ttl), str(self.hops), self.end_node)
 
 
 class RouteReplyHeader(Header):
@@ -154,8 +154,8 @@ class RouteReplyHeader(Header):
                " " + self.next_node
 
     def get_header_str(self):
-        return self.source + str(self.flag) + str(self.ttl) + str(
-            self.hops) + self.end_node + self.next_node
+        return create_header_str(self.source, str(self.flag), str(self.ttl), str(self.hops), self.end_node,
+                                 self.next_node)
 
 
 class MessageHeader(Header):
@@ -169,8 +169,8 @@ class MessageHeader(Header):
         self.destination = destination
 
     def get_header_str(self):
-        return self.source + str(self.flag) + str(self.ttl) + self.destination + \
-               self.next_node + self.payload
+        return create_header_str(self.source, str(self.flag), str(self.ttl), self.destination, self.next_node,
+                                 self.payload)
 
 
 class RouteErrorHeader(Header):
@@ -183,3 +183,15 @@ class RouteErrorHeader(Header):
 
     def get_header_str(self):
         return self.source + str(self.flag) + str(self.ttl) + self.broken_node
+
+
+def create_header_str(*args):
+    """
+    create header str with delimiters
+    :param args: values which should be in header
+    :return: values concatenated as str with '|' as delimiter
+    """
+    header_str = '|'
+    for arg in args:
+        header_str = header_str + str(arg) + '|'
+    return header_str

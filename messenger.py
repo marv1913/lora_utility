@@ -18,7 +18,7 @@ LIST_MODE = 2
 class Messenger:
     MODE = SEND_MODE
     # DESTINATION_ADDRESS = None
-    DESTINATION_ADDRESS = '0139'
+    DESTINATION_ADDRESS = '0135'
 
     def __init__(self, protocol_obj):
         self.protocol = protocol_obj

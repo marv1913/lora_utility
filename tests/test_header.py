@@ -55,3 +55,15 @@ class HeaderTest(unittest.TestCase):
 
     def test_create_header_obj_bad_message_without_header(self):
         self.assertRaises(ValueError, header.create_header_obj_from_raw_message, 'LR,FFFF,0A,hello')
+
+    def test_get_header_str_route_request_header_good(self):
+        route_request_header_obj = header.RouteRequestHeader('0131', '0130', 9, 1, '0133')
+        self.assertEqual('|0130|3|9|1|0133|', route_request_header_obj.get_header_str())
+
+    def test_get_header_str_route_reply_header_good(self):
+        route_reply_header_obj = header.RouteReplyHeader('0131', '0130', 9, 1, '0132', '0133')
+        self.assertEqual('|0130|4|9|1|0132|0133|', route_reply_header_obj.get_header_str())
+
+    def test_get_header_str_message_header_good(self):
+        message_header_obj = header.MessageHeader('0131', '0130', 9, '0133', '0132', 'hello')
+        self.assertEqual('|0130|1|9|0133|0132|hello|', message_header_obj.get_header_str())

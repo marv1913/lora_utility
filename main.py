@@ -7,12 +7,14 @@ from protocol_lite import ProtocolLite
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG)
 
+    # module_conf = ModuleConfig(consumer_producer.ser)
+    # module_conf.config_module()
+
     protocol = ProtocolLite()
 
     messenger = Messenger(protocol)
-    time.sleep(4)
+    time.sleep(2)
 
     messenger.start_chatting()
-
 
     # TODO implement function to config lora module before launching UI and get own address from module
