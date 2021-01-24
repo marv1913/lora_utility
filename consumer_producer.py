@@ -81,6 +81,7 @@ class ConsumerThread(threading.Thread):
                         status = bytes_to_str(ser.readline())
                         status = status.strip()
                         if 'LR' in status:
+                            logging.warning('got message while verifying command: {}. Message dumped.'.format(status))
                             #  dump message, if receiving message while verifying status of command
                             status = bytes_to_str(ser.readline())
                             status = status.strip()
