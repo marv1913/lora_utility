@@ -14,7 +14,7 @@ route_request from 0138 to 0137 and gets reply from 0137
 |0137|4|9|0|0138|0138|
 
 
-0138 sends route request to 01376 and 0137 is forwarding this request
+0138 sends route request to 0136 and 0137 is forwarding this request
 |0138|3|9|0|0136|
 |0138|3|8|1|0136|
 

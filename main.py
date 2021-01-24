@@ -5,8 +5,24 @@ import consumer_producer
 from messenger import Messenger
 from protocol_lite import ProtocolLite
 
+def reset_module():
+
+    import RPi.GPIO as GPIO
+    import time
+
+    GPIO.setmode(GPIO.BCM)
+    GPIO.setup(18, GPIO.OUT)
+    GPIO.output(18, GPIO.LOW)
+    time.sleep(1)
+    GPIO.output(18, GPIO.HIGH)
+    GPIO.cleanup()
+
+
 if __name__ == '__main__':
+
+    # reset_module()
     logging.basicConfig(level=logging.DEBUG)
+
 
     # module_conf = ModuleConfig(consumer_producer.ser)
     # module_conf.config_module()

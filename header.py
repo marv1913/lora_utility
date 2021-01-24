@@ -30,9 +30,10 @@ def create_header_obj_from_raw_message(raw_message):
         # header_str = header_str.strip()
 
         header_as_list = header_str.split(variables.HEADER_DELIMITER)
-        del header_as_list[0]  # remove first and last element, because they are empty strings (delimiter without values)
-        del header_as_list[len(header_as_list)-1]  # remove first and last element, because they are empty strings (delimiter without values)
-
+        del header_as_list[
+            0]  # remove first and last element, because they are empty strings (delimiter without values)
+        del header_as_list[len(
+            header_as_list) - 1]  # remove first and last element, because they are empty strings (delimiter without values)
 
         source = header_as_list[0]
         check_addr_field(source, 'source')
@@ -84,16 +85,21 @@ def check_int_field(two_digit_value_str, length=1):
         int(two_digit_value_str)
 
 
-def check_addr_field(addr_str, field_name):
+def check_addr_field(addr_str, field_name=''):
     if len(addr_str) != 4:
         raise ValueError(
             "header field '{field_name}' has an unexpected format: {addr_str}".format(field_name=field_name,
                                                                                       addr_str=addr_str))
 
+
 def get_received_from_value(raw_message):
-    received_from = raw_message.split(variables.LORA_MODULE_DELIMITER)[1]
-    check_addr_field(received_from)
-    return received_from
+    try:
+        received_from = raw_message.split(variables.LORA_MODULE_DELIMITER)[1]
+        check_addr_field(received_from)
+        return received_from
+    except IndexError:
+        raise ValueError('could not get received from value of message')
+
 
 def get_flag_from_raw_message(raw_message):
     """

@@ -11,8 +11,6 @@ __author__ = "Marvin Rausch"
 
 ser = serial.serial_for_url('/dev/ttyS0', baudrate=115200, timeout=20)
 
-# read_file = 'C:/temp/temp1/simplified.txt'
-# log1 = open('C:/temp/temp1/simplified_log1.txt', "a+")
 
 logging.basicConfig(level=logging.DEBUG, format='(%(threadName)-9s) %(message)s', )
 
@@ -82,6 +80,10 @@ class ConsumerThread(threading.Thread):
                     for entry in verify_list:
                         status = bytes_to_str(ser.readline())
                         status = status.strip()
+                        if 'LR' in status:
+                            #  dump message, if receiving message while verifying status of command
+                            status = bytes_to_str(ser.readline())
+                            status = status.strip()
                         if entry != status:
                             logging.warning(
                                 'could not verify {expected} != {status}'.format(expected=entry, status=status))

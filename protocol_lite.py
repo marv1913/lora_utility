@@ -55,6 +55,8 @@ class ProtocolLite:
                         self.process_route_request(header_obj)
                     elif header_obj.flag == header.MessageHeader.HEADER_TYPE:
                         self.process_message_header(header_obj)
+                    elif header_obj.flag == header.RouteReplyHeader.HEADER_TYPE:
+                        self.process_route_reply_header(header_obj)
 
                 except ValueError as e:
                     logging.warning(str(e))
@@ -62,8 +64,8 @@ class ProtocolLite:
                         logging.debug('try to add received signal to unsupported devices list...')
                         addr = header.get_received_from_value(raw_message)
                         self.routing_table.add_neighbor_with_unsupported_protocol(addr)
-                    except ValueError:
-                        pass
+                    except ValueError as e:
+                        logging.warning(str(e))
 
     def send_message(self, destination, payload):
         best_route = self.routing_table.get_best_route_for_destination(destination)
@@ -158,9 +160,9 @@ class ProtocolLite:
             logging.debug('ignoring message: {}'.format(str(header_obj)))
 
     def process_route_reply_header(self, header_obj):
-        if header_obj.source == variables.MY_ADDRESS:
+        if header_obj.end_node == variables.MY_ADDRESS:
             # add entry to routing table
-            self.routing_table.add_routing_table_entry(header_obj.end_node, header_obj.received_from, header_obj.hops)
+            self.routing_table.add_routing_table_entry(header_obj.source, header_obj.received_from, header_obj.hops + 1)
         elif header_obj.next_node == variables.MY_ADDRESS:
             if len(self.routing_table.get_best_route_for_destination(header_obj.source)) != 0:
                 # forward route reply message
