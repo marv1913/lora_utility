@@ -29,4 +29,4 @@ jobs:
       - name: install requirements
         run: python3 -m pip install -r requirements.txt
       - name: Run tests
-        run: python3 -m pytest
+        run: cd resources && python3 -m pytest
