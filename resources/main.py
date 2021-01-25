@@ -1,6 +1,8 @@
 import logging
 import time
 
+import serial
+
 import consumer_producer
 from messenger import Messenger
 from protocol_lite import ProtocolLite
@@ -23,10 +25,10 @@ if __name__ == '__main__':
     # reset_module()
     logging.basicConfig(level=logging.DEBUG)
 
-
+    ser = serial.serial_for_url('/dev/ttyS0', baudrate=115200, timeout=20)
     # module_conf = ModuleConfig(consumer_producer.ser)
     # module_conf.config_module()
-    consumer_producer.start_send_receive_threads()
+    consumer_producer.start_send_receive_threads(ser)
 
     protocol = ProtocolLite()
 

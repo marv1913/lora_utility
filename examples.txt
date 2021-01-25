@@ -1,6 +1,6 @@
 0137 sends route request to 0138 and 0138 sends route reply:
 |0137|3|9|0|0138|
-|0138|4|9|0|0137|0137|
+|0138|4|9|0|0137|0137| # length 22
 
 
 route_reply from 0138 to 0136 over 0137

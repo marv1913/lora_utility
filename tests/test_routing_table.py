@@ -2,7 +2,7 @@ import unittest
 
 __author__ = "Marvin Rausch"
 
-from routing_table import RoutingTable
+from resources.routing_table import RoutingTable
 
 
 class RoutingTableTest(unittest.TestCase):

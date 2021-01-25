@@ -1,6 +1,6 @@
 import unittest
 
-import header
+from resources import header
 
 __author__ = "Marvin Rausch"
 

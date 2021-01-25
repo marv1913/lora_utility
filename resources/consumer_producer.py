@@ -9,7 +9,7 @@ import variables
 
 __author__ = "Marvin Rausch"
 
-ser = serial.serial_for_url('/dev/ttyS0', baudrate=115200, timeout=20)
+ser = None
 
 
 logging.basicConfig(level=logging.DEBUG, format='(%(threadName)-9s) %(message)s', )
@@ -97,7 +97,9 @@ class ConsumerThread(threading.Thread):
                 WRITE_DATA = False
 
 
-def start_send_receive_threads():
+def start_send_receive_threads(serial_conn):
+    global ser
+    ser = serial_conn
     t1 = ProducerThread(name='producer')
     t2 = ConsumerThread(name='consumer')
 
