@@ -75,6 +75,11 @@ def create_header_obj_from_raw_message(raw_message):
             check_addr_field(next_node, 'next_node')
 
             return RouteReplyHeader(received_from, source, ttl, hops, end_node, next_node)
+        elif flag == RouteErrorHeader.HEADER_TYPE:
+            broken_node = header_as_list[3]
+            check_addr_field(broken_node, 'broken node')
+
+            return RouteErrorHeader(received_from, source, ttl, broken_node)
         raise ValueError("flag '{}' is not a valid flag".format(flag))
     except IndexError:
         raise ValueError("header has an unexpected length")
@@ -186,7 +191,6 @@ class MessageHeader(Header):
 
 
 class RouteErrorHeader(Header):
-    LENGTH = 10
     HEADER_TYPE = 5
 
     def __init__(self, received_from, source, ttl, broken_node):
@@ -194,7 +198,21 @@ class RouteErrorHeader(Header):
         self.broken_node = broken_node
 
     def get_header_str(self):
-        return self.source + str(self.flag) + str(self.ttl) + self.broken_node
+        return create_header_str(self.source, str(self.flag), str(self.ttl), self.broken_node)
+
+
+class MessageAcknowledgeHeader:
+    HEADER_TYPE = 2
+
+    def __init__(self, received_from, destination, ttl, ack_id):
+        self.flag = self.HEADER_TYPE
+        self.received_from = received_from
+        self.destination = destination
+        self.ttl = ttl
+        self.ack_id = ack_id
+
+    def get_header_str(self):
+        return create_header_str(str(self.flag), str(self.ttl), self.destination, self.ack_id)
 
 
 def create_header_str(*args):

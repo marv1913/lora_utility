@@ -1,4 +1,6 @@
+import hashlib
 import logging
+import random
 import signal
 import threading
 import time
@@ -35,6 +37,7 @@ class ProtocolLite:
         receiving_thread.start()
 
     def send_header(self, header_str):
+        wait_random_time()
         consumer_producer.q.put(('AT+SEND={}'.format(str(len(header_str))), ['AT,OK']))
         if consumer_producer.status_q.get(timeout=self.VERIFICATION_TIMEOUT):
             consumer_producer.q.put((header_str, ['AT,SENDING', 'AT,SENDED']))
@@ -57,6 +60,8 @@ class ProtocolLite:
                         self.process_message_header(header_obj)
                     elif header_obj.flag == header.RouteReplyHeader.HEADER_TYPE:
                         self.process_route_reply_header(header_obj)
+                    elif header_obj.flag == header.RouteErrorHeader.HEADER_TYPE:
+                        logging.debug('received route error: {}'.format(header_obj.get_header_str()))
 
                 except ValueError as e:
                     logging.warning(str(e))
@@ -87,6 +92,7 @@ class ProtocolLite:
         route_request_header_obj = header.RouteRequestHeader(None, variables.MY_ADDRESS, variables.DEFAULT_TTL, 0,
                                                              end_node)
         self.send_header(route_request_header_obj.get_header_str())
+
         with timeout(variables.ROUTE_REQUEST_TIMEOUT):
             while True:
                 try:
@@ -187,6 +193,10 @@ class ProtocolLite:
                                                          end_node)
         self.send_header(route_error_header_obj.get_header_str())
 
+    def send_message_acknowledgement(self, source, destination, payload):
+        ack_header_obj = header.MessageAcknowledgeHeader(None, destination, 9, calculate_ack_id(source, payload))
+        self.send_header(ack_header_obj.get_header_str())
+
     def stop(self):
         self.PROCESS_INCOMING_MESSAGES = False
         consumer_producer.CONSUMER_THREAD_ACTIVE = False
@@ -211,3 +221,14 @@ def timeout(time_in_sec):
 
 def raise_timeout(signum, frame):
     raise TimeoutError
+
+
+def wait_random_time():
+    sleep_time = random.uniform(0, 2)
+    logging.debug('waiting {} seconds before sending'.format(sleep_time))
+    time.sleep(sleep_time)
+
+
+def calculate_ack_id(address, payload):
+    hash_object = hashlib.md5(bytes(address + payload, variables.ENCODING))
+    return hash_object.hexdigest()[:6]

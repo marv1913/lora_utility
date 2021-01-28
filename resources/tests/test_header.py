@@ -61,3 +61,8 @@ class HeaderTest(unittest.TestCase):
     def test_get_header_str_message_header_good(self):
         message_header_obj = header.MessageHeader('0131', '0130', 9, '0133', '0132', 'hello')
         self.assertEqual('|0130|1|9|0133|0132|hello|', message_header_obj.get_header_str())
+
+    def test_get_header_str_ack_header_good(self):
+        message_header_obj = header.MessageAcknowledgeHeader(received_from=None, ttl=9, destination='0133',
+                                                             ack_id='example_hash')
+        self.assertEqual('|2|9|0133|example_hash|', message_header_obj.get_header_str())

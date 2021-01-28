@@ -44,7 +44,6 @@ class ProducerThread(threading.Thread):
             global WRITE_DATA
             if q.empty() and not WRITE_DATA:
                 if ser.in_waiting:
-                    logging.debug('read')
                     received_raw_message = ser.readline()
                     logging.debug('received: {}'.format(received_raw_message))
 
