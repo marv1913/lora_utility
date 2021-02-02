@@ -19,6 +19,7 @@ class ProtocolLite:
     PROCESS_INCOMING_MESSAGES = True
     VERIFICATION_TIMEOUT = 25
     PAUSE_PROCESSING_INCOMING_MESSAGES = False
+    MESSAGES_ACKNOWLEDGMENT = []
 
     def __init__(self):
         logging.info('created protocol obj: {}'.format(str(self)))
@@ -62,6 +63,8 @@ class ProtocolLite:
                         self.process_route_reply_header(header_obj)
                     elif header_obj.flag == header.RouteErrorHeader.HEADER_TYPE:
                         logging.debug('received route error: {}'.format(header_obj.get_header_str()))
+                    elif header_obj.flag == header.MessageAcknowledgeHeader.HEADER_TYPE:
+                        self.edit_message_acknowledgment_list(header_obj)
 
                 except ValueError as e:
                     logging.warning(str(e))
@@ -83,10 +86,27 @@ class ProtocolLite:
                 logging.info(
                     'Got no answer on route requested.'.format(destination))
                 return
-
-        header_obj = header.MessageHeader(None, variables.MY_ADDRESS, 9, destination, best_route['next_node'],
-                                          payload)
-        self.send_header(header_obj.get_header_str())
+        header_obj = header.MessageHeader(None, variables.MY_ADDRESS, variables.DEFAULT_TTL, destination,
+                                          best_route['next_node'], payload)
+        attempt = 0
+        ack_id = self.add_message_to_waiting_acknowledgement_list(header_obj)
+        message_confirmed = False
+        while attempt < 3 and not message_confirmed:
+            self.send_header(header_obj.get_header_str())
+            with timeout(5):
+                try:
+                    logging.debug('attempt: {}'.format(attempt))
+                    while True:
+                        if ack_id not in self.MESSAGES_ACKNOWLEDGMENT:
+                            message_confirmed = True
+                            break
+                except TimeoutError:
+                    attempt = attempt + 1
+                    logging.debug(attempt)
+        if message_confirmed:
+            logging.debug('message was acknowledged by receiver')
+        else:
+            logging.debug('message was not acknowledged by receiver')
 
     def send_route_request_message(self, end_node):
         route_request_header_obj = header.RouteRequestHeader(None, variables.MY_ADDRESS, variables.DEFAULT_TTL, 0,
@@ -151,6 +171,11 @@ class ProtocolLite:
     def process_message_header(self, header_obj):
         if header_obj.destination == variables.MY_ADDRESS:
             view.display_received_message(header_obj)
+            # send acknowledge message
+            hash_value = calculate_ack_id(header_obj.source, header_obj.payload)
+            logging.debug('sending acknowledgement')
+            self.send_header(header.MessageAcknowledgeHeader(None, variables.MY_ADDRESS, variables.TTL_START_VALUE,
+                                                             header_obj.source, hash_value).get_header_str())
         elif header_obj.next_node == variables.MY_ADDRESS:
             best_route = self.routing_table.get_best_route_for_destination(header_obj.destination)
             if len(best_route) == 0:
@@ -202,6 +227,18 @@ class ProtocolLite:
         consumer_producer.CONSUMER_THREAD_ACTIVE = False
         consumer_producer.PRODUCER_THREAD_ACTIVE = False
 
+    def add_message_to_waiting_acknowledgement_list(self, message_header_obj):
+        ack_id = calculate_ack_id(message_header_obj.source, message_header_obj.payload)
+        logging.debug('adding {} to ack list'.format(ack_id))
+        self.MESSAGES_ACKNOWLEDGMENT.append(ack_id)
+        return ack_id
+
+    def edit_message_acknowledgment_list(self, message_ack_header_obj):
+        logging.debug('remove {} from ack list'.format(message_ack_header_obj.ack_id))
+        try:
+            self.MESSAGES_ACKNOWLEDGMENT.remove(message_ack_header_obj.ack_id)
+        except ValueError:
+            logging.debug('received ack is not in list')
 
 @contextmanager
 def timeout(time_in_sec):
@@ -224,7 +261,7 @@ def raise_timeout(signum, frame):
 
 
 def wait_random_time():
-    sleep_time = random.uniform(0, 2)
+    sleep_time = random.uniform(0, variables.MAX_SLEEP_TIME)
     logging.debug('waiting {} seconds before sending'.format(sleep_time))
     time.sleep(sleep_time)
 

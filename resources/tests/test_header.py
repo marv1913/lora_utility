@@ -31,6 +31,11 @@ class HeaderTest(unittest.TestCase):
         self.assertEqual(header_obj.ttl, 8)
         self.assertEqual(header_obj.hops, 3)
 
+    def test_create_message_ack_header_good(self):
+        header_obj = header.create_header_obj_from_raw_message('LR,0137,16,|0137|2|5|0138|8774d3|')
+        self.assertEqual(header_obj.flag, 2)
+
+
     def test_create_route_reply_header_obj_bad_invalid_flag(self):
         self.assertRaises(ValueError, header.create_header_obj_from_raw_message, 'LR,0136,10,|0137|8|8|3|0139|0140|')
 

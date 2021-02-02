@@ -45,19 +45,21 @@ def create_header_obj_from_raw_message(raw_message):
         ttl = header_as_list[2]
         check_int_field(ttl)
 
-        if flag == MessageHeader.HEADER_TYPE:
+        if flag == MessageHeader.HEADER_TYPE or flag == MessageAcknowledgeHeader.HEADER_TYPE:
             destination = header_as_list[3]
             if destination not in variables.AVAILABLE_NODES:
                 raise ValueError(
                     "unknown destination: {destination} \n available destinations are {available_destinations}".format(
                         destination=destination, available_destinations=str(variables.AVAILABLE_NODES)))
-
-            next_node = header_as_list[4]
-            check_addr_field(next_node, 'next_node')
-            payload = header_as_list[5]
-            if len(payload) == 0:
-                raise ValueError('payload is empty!')
-            return MessageHeader(received_from, source, ttl, destination, next_node, payload)
+            if flag == MessageAcknowledgeHeader.HEADER_TYPE:
+                return MessageAcknowledgeHeader(received_from, source, ttl, destination, header_as_list[4])
+            else:
+                next_node = header_as_list[4]
+                check_addr_field(next_node, 'next_node')
+                payload = header_as_list[5]
+                if len(payload) == 0:
+                    raise ValueError('payload is empty!')
+                return MessageHeader(received_from, source, ttl, destination, next_node, payload)
         elif flag == RouteRequestHeader.HEADER_TYPE or flag == RouteReplyHeader.HEADER_TYPE:
             # it is a route request or a route reply header
             hops = header_as_list[3]
@@ -201,10 +203,11 @@ class RouteErrorHeader(Header):
         return create_header_str(self.source, str(self.flag), str(self.ttl), self.broken_node)
 
 
-class MessageAcknowledgeHeader:
+class MessageAcknowledgeHeader(Header):
     HEADER_TYPE = 2
 
-    def __init__(self, received_from, destination, ttl, ack_id):
+    def __init__(self, received_from, source, ttl, destination, ack_id):
+        super().__init__(received_from, source, self.HEADER_TYPE, ttl)
         self.flag = self.HEADER_TYPE
         self.received_from = received_from
         self.destination = destination
@@ -212,7 +215,7 @@ class MessageAcknowledgeHeader:
         self.ack_id = ack_id
 
     def get_header_str(self):
-        return create_header_str(str(self.flag), str(self.ttl), self.destination, self.ack_id)
+        return create_header_str(str(self.source), str(self.flag), str(self.ttl), self.destination, self.ack_id)
 
 
 def create_header_str(*args):
