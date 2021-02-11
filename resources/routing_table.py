@@ -1,10 +1,10 @@
-
 import logging
 import time
 
 import variables
 
 __author__ = "Marvin Rausch"
+
 
 class RoutingTable:
 
@@ -16,7 +16,7 @@ class RoutingTable:
     def add_routing_table_entry(self, destination, next_node, hops):
         new_routing_table_entry = {'destination': destination, 'next_node': next_node, 'hops': hops}
         if not self.check_routing_table_entry_exists(destination, next_node, hops):
-            logging.debug('new entry in routing table: {}'. format(str(new_routing_table_entry)))
+            logging.debug('new entry in routing table: {}'.format(str(new_routing_table_entry)))
             self.routing_table.append(new_routing_table_entry)
             if destination in self.unsupported_devices:
                 self.unsupported_devices.remove(destination)
@@ -72,6 +72,13 @@ class RoutingTable:
                 return
         self.processed_route_requests.append({'address': address, 'time': time.time()})
 
+    def delete_all_entries_of_destination(self, destination):
+        new_list = []
+        for entry in self.routing_table:
+            if destination not in entry.values():
+                new_list.append(entry)
+        self.routing_table = new_list
+
     def __clean_already_processed_requests_list(self):
         current_time = time.time()
         cleaned_list = []
@@ -86,6 +93,3 @@ class RoutingTable:
             if address_dict['address'] == address:
                 return True
         return False
-
-
-

@@ -25,14 +25,6 @@ class ProtocolLite:
         logging.info('created protocol obj: {}'.format(str(self)))
         self.routing_table = RoutingTable()
 
-        # p = consumer_producer.ProducerThread(name='producer')
-        # c = consumer_producer.ConsumerThread(name='consumer')
-        #
-        # p.start()
-        # time.sleep(0.5)
-        # c.start()
-        # time.sleep(0.5)
-
     def start_protocol_thread(self):
         receiving_thread = threading.Thread(target=self.process_incoming_message)
         receiving_thread.start()
@@ -62,7 +54,7 @@ class ProtocolLite:
                     elif header_obj.flag == header.RouteReplyHeader.HEADER_TYPE:
                         self.process_route_reply_header(header_obj)
                     elif header_obj.flag == header.RouteErrorHeader.HEADER_TYPE:
-                        logging.debug('received route error: {}'.format(header_obj.get_header_str()))
+                        self.process_route_error_header(header_obj)
                     elif header_obj.flag == header.MessageAcknowledgeHeader.HEADER_TYPE:
                         self.edit_message_acknowledgment_list(header_obj)
 
@@ -92,37 +84,42 @@ class ProtocolLite:
         ack_id = self.add_message_to_waiting_acknowledgement_list(header_obj)
         message_confirmed = False
         while attempt < 3 and not message_confirmed:
+            logging.debug(f'attempt: {attempt}')
             self.send_header(header_obj.get_header_str())
             with timeout(5):
                 try:
-                    logging.debug('attempt: {}'.format(attempt))
                     while True:
                         if ack_id not in self.MESSAGES_ACKNOWLEDGMENT:
                             message_confirmed = True
                             break
                 except TimeoutError:
                     attempt = attempt + 1
-                    logging.debug(attempt)
         if message_confirmed:
             logging.debug('message was acknowledged by receiver')
         else:
-            logging.debug('message was not acknowledged by receiver')
+            logging.debug('message was not acknowledged by receiver. Sending route error message')
+            self.send_header(
+                header.RouteErrorHeader(None, variables.MY_ADDRESS, variables.DEFAULT_TTL,
+                                        header_obj.destination).get_header_str())
 
     def send_route_request_message(self, end_node):
         route_request_header_obj = header.RouteRequestHeader(None, variables.MY_ADDRESS, variables.DEFAULT_TTL, 0,
                                                              end_node)
-        self.send_header(route_request_header_obj.get_header_str())
-
-        with timeout(variables.ROUTE_REQUEST_TIMEOUT):
-            while True:
+        attempt = 0
+        message_confirmed = False
+        while attempt < 3 and not message_confirmed:
+            self.send_header(route_request_header_obj.get_header_str())
+            with timeout(5):
                 try:
-                    if len(self.routing_table.get_best_route_for_destination(end_node)) != 0:
-                        logging.debug('new route for {} found'.format(end_node))
-                        return True
-                    time.sleep(0.5)
-                except ValueError:
-                    logging.debug('got not answer for route request to {}'.format(end_node))
-                    return False
+                    logging.debug('attempt: {}'.format(attempt))
+                    while True:
+                        if len(self.routing_table.get_best_route_for_destination(end_node)) != 0:
+                            logging.debug('new route for {} found'.format(end_node))
+                            message_confirmed = True
+                            break
+                except TimeoutError:
+                    attempt = attempt + 1
+        return message_confirmed
 
     def process_route_request(self, header_obj):
         # first of all check whether source of route request is myself (to prevent cycle)
@@ -213,6 +210,11 @@ class ProtocolLite:
                 # source node of route request')
                 # self.send_route_error(header_obj.source)
 
+    def process_route_error_header(self, header_obj):
+        if header_obj.broken_node in self.routing_table.get_list_of_all_available_destinations():
+            logging.debug(f'received route error. Remove {header_obj.broken_node} from routing table')
+            self.routing_table.delete_all_entries_of_destination(header_obj.broken_node)
+
     def send_route_error(self, end_node):
         route_error_header_obj = header.RouteErrorHeader(None, variables.MY_ADDRESS, 9,
                                                          end_node)
@@ -239,6 +241,7 @@ class ProtocolLite:
             self.MESSAGES_ACKNOWLEDGMENT.remove(message_ack_header_obj.ack_id)
         except ValueError:
             logging.debug('received ack is not in list')
+
 
 @contextmanager
 def timeout(time_in_sec):

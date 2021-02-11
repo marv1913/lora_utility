@@ -24,3 +24,6 @@ route request from 0139 to find 0134
 
 message from 0137 to 0139
 0137 1 9 0139 0139 hello
+
+route error from 0139 about broken node 0138
+|0139|5|4|0138| (length=15)
