@@ -44,6 +44,7 @@ def create_header_obj_from_raw_message(raw_message):
 
         ttl = header_as_list[2]
         check_int_field(ttl)
+        ttl = int(ttl)
 
         if flag == MessageHeader.HEADER_TYPE or flag == MessageAcknowledgeHeader.HEADER_TYPE:
             destination = header_as_list[3]

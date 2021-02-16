@@ -56,7 +56,7 @@ class ProtocolLite:
                     elif header_obj.flag == header.RouteErrorHeader.HEADER_TYPE:
                         self.process_route_error_header(header_obj)
                     elif header_obj.flag == header.MessageAcknowledgeHeader.HEADER_TYPE:
-                        self.edit_message_acknowledgment_list(header_obj)
+                        self.process_ack_header(header_obj)
 
                 except ValueError as e:
                     logging.warning(str(e))
@@ -214,6 +214,13 @@ class ProtocolLite:
         if header_obj.broken_node in self.routing_table.get_list_of_all_available_destinations():
             logging.debug(f'received route error. Remove {header_obj.broken_node} from routing table')
             self.routing_table.delete_all_entries_of_destination(header_obj.broken_node)
+        header_obj.ttl -= 1
+        self.send_header(header_obj.get_header_str())
+
+    def process_ack_header(self, header_obj):
+        self.edit_message_acknowledgment_list(header_obj)
+        header_obj.ttl -= 1
+        self.send_header(header_obj.get_header_str())
 
     def send_route_error(self, end_node):
         route_error_header_obj = header.RouteErrorHeader(None, variables.MY_ADDRESS, 9,
