@@ -99,6 +99,7 @@ class ProtocolLite:
             logging.debug('message was acknowledged by receiver')
         else:
             logging.debug('message was not acknowledged by receiver. Sending route error message')
+            self.routing_table.delete_all_entries_of_destination(destination)
             self.send_header(
                 header.RouteErrorHeader(None, variables.MY_ADDRESS, variables.DEFAULT_TTL,
                                         header_obj.destination).get_header_str())
