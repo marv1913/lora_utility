@@ -24,7 +24,8 @@ def reset_module():
 if __name__ == '__main__':
 
     # reset_module()
-    logging.basicConfig(level=logging.DEBUG)
+    logging.basicConfig()
+    logging.getLogger().setLevel(logging.DEBUG)
 
     ser = serial.serial_for_url('/dev/ttyS0', baudrate=115200, timeout=20)
     # module_conf = ModuleConfig(consumer_producer.ser)

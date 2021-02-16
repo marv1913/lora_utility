@@ -46,19 +46,18 @@ class ProtocolLite:
 
                 try:
                     header_obj = header.create_header_obj_from_raw_message(raw_message)
-                    if header_obj.ttl < 1:
-                        return
-                    self.routing_table.add_neighbor_to_routing_table(header_obj)
-                    if header_obj.flag == header.RouteRequestHeader.HEADER_TYPE:
-                        self.process_route_request(header_obj)
-                    elif header_obj.flag == header.MessageHeader.HEADER_TYPE:
-                        self.process_message_header(header_obj)
-                    elif header_obj.flag == header.RouteReplyHeader.HEADER_TYPE:
-                        self.process_route_reply_header(header_obj)
-                    elif header_obj.flag == header.RouteErrorHeader.HEADER_TYPE:
-                        self.process_route_error_header(header_obj)
-                    elif header_obj.flag == header.MessageAcknowledgeHeader.HEADER_TYPE:
-                        self.process_ack_header(header_obj)
+                    if header_obj.ttl > 1:
+                        self.routing_table.add_neighbor_to_routing_table(header_obj)
+                        if header_obj.flag == header.RouteRequestHeader.HEADER_TYPE:
+                            self.process_route_request(header_obj)
+                        elif header_obj.flag == header.MessageHeader.HEADER_TYPE:
+                            self.process_message_header(header_obj)
+                        elif header_obj.flag == header.RouteReplyHeader.HEADER_TYPE:
+                            self.process_route_reply_header(header_obj)
+                        elif header_obj.flag == header.RouteErrorHeader.HEADER_TYPE:
+                            self.process_route_error_header(header_obj)
+                        elif header_obj.flag == header.MessageAcknowledgeHeader.HEADER_TYPE:
+                            self.process_ack_header(header_obj)
 
                 except ValueError as e:
                     logging.warning(str(e))
@@ -191,6 +190,8 @@ class ProtocolLite:
             logging.debug('ignoring message: {}'.format(str(header_obj)))
 
     def process_route_reply_header(self, header_obj):
+        if header_obj.source == variables.MY_ADDRESS:
+            return
         if header_obj.end_node == variables.MY_ADDRESS:
             # add entry to routing table
             self.routing_table.add_routing_table_entry(header_obj.source, header_obj.received_from, header_obj.hops + 1)
@@ -198,8 +199,9 @@ class ProtocolLite:
             if len(self.routing_table.get_best_route_for_destination(header_obj.source)) != 0:
                 # forward route reply message
                 # add routing table entry
-                self.routing_table.add_routing_table_entry(header_obj.end_node, header_obj.received_from,
-                                                           header_obj.hops)
+                logging.debug("add routing table entry before forwarding route reply message")
+                self.routing_table.add_routing_table_entry(header_obj.source, header_obj.received_from,
+                                                           header_obj.hops + 1)
                 # forward message
                 header_obj.next_node = self.routing_table.get_best_route_for_destination(header_obj.source)['next_node']
                 header_obj.hops = header_obj.hops + 1
@@ -217,8 +219,11 @@ class ProtocolLite:
         if header_obj.broken_node in self.routing_table.get_list_of_all_available_destinations():
             logging.debug(f'received route error. Remove {header_obj.broken_node} from routing table')
             self.routing_table.delete_all_entries_of_destination(header_obj.broken_node)
+        else:
+            logging.debug(f'broken node is not in available nodes: {self.routing_table.get_list_of_all_available_destinations()}')
         header_obj.ttl -= 1
         self.send_header(header_obj.get_header_str())
+
 
     def process_ack_header(self, header_obj):
         self.edit_message_acknowledgment_list(header_obj)
