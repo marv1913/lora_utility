@@ -128,7 +128,9 @@ class ProtocolLite:
         if header_obj.source != variables.MY_ADDRESS:
             # look whether requested node is myself
             if header_obj.end_node == variables.MY_ADDRESS:
-                self.routing_table.add_routing_table_entry(header_obj.source, header_obj.received_from, header_obj.hops)
+                logging.debug('add new routing table entry before sending route reply')
+                self.routing_table.add_routing_table_entry(header_obj.source, header_obj.received_from,
+                                                           header_obj.hops + 1)
                 logging.info('sending route reply message...')
                 self.send_route_reply(next_node=header_obj.received_from, end_node=header_obj.source)
             else:
