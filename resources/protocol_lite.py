@@ -46,6 +46,8 @@ class ProtocolLite:
 
                 try:
                     header_obj = header.create_header_obj_from_raw_message(raw_message)
+                    if header_obj.ttl < 1:
+                        return
                     self.routing_table.add_neighbor_to_routing_table(header_obj)
                     if header_obj.flag == header.RouteRequestHeader.HEADER_TYPE:
                         self.process_route_request(header_obj)
@@ -126,8 +128,7 @@ class ProtocolLite:
         if header_obj.source != variables.MY_ADDRESS:
             # look whether requested node is myself
             if header_obj.end_node == variables.MY_ADDRESS:
-                #      send route reply
-                # route_reply_header = header.RouteReplyHeader(None, variables.MY_ADDRESS, )
+                self.routing_table.add_routing_table_entry(header_obj.source, header_obj.received_from, header_obj.hops)
                 logging.info('sending route reply message...')
                 self.send_route_reply(next_node=header_obj.received_from, end_node=header_obj.source)
             else:
@@ -220,6 +221,7 @@ class ProtocolLite:
     def process_ack_header(self, header_obj):
         self.edit_message_acknowledgment_list(header_obj)
         header_obj.ttl -= 1
+        logging.debug('forward ack message')
         self.send_header(header_obj.get_header_str())
 
     def send_route_error(self, end_node):
