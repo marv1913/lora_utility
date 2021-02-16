@@ -96,13 +96,14 @@ class ProtocolLite:
                 except TimeoutError:
                     attempt = attempt + 1
         if message_confirmed:
-            logging.debug('message was acknowledged by receiver')
+            logging.info('message was acknowledged by receiver')
         else:
-            logging.debug('message was not acknowledged by receiver. Sending route error message')
+            logging.debug(f'message was not acknowledged by receiver. Current ack_list: {self.MESSAGES_ACKNOWLEDGMENT}'
+                          f'\nSending route error message')
             self.routing_table.delete_all_entries_of_destination(destination)
-            self.send_header(
-                header.RouteErrorHeader(None, variables.MY_ADDRESS, variables.DEFAULT_TTL,
-                                        header_obj.destination).get_header_str())
+            self.delete_from_ack_list(ack_id)
+            self.send_header(header.RouteErrorHeader(None, variables.MY_ADDRESS, variables.DEFAULT_TTL,
+                                                     header_obj.destination).get_header_str())
 
     def send_route_request_message(self, end_node):
         route_request_header_obj = header.RouteRequestHeader(None, variables.MY_ADDRESS, variables.DEFAULT_TTL, 0,
@@ -128,6 +129,7 @@ class ProtocolLite:
         if header_obj.source != variables.MY_ADDRESS:
             # look whether requested node is myself
             if header_obj.end_node == variables.MY_ADDRESS:
+                # Todo send route reply if there is a routing table entry for requested node (also if not end node my address)
                 logging.debug('add new routing table entry before sending route reply')
                 self.routing_table.add_routing_table_entry(header_obj.source, header_obj.received_from,
                                                            header_obj.hops + 1)
@@ -221,10 +223,10 @@ class ProtocolLite:
             logging.debug(f'received route error. Remove {header_obj.broken_node} from routing table')
             self.routing_table.delete_all_entries_of_destination(header_obj.broken_node)
         else:
-            logging.debug(f'broken node is not in available nodes: {self.routing_table.get_list_of_all_available_destinations()}')
+            logging.debug(
+                f'broken node is not in available nodes: {self.routing_table.get_list_of_all_available_destinations()}')
         header_obj.ttl -= 1
         self.send_header(header_obj.get_header_str())
-
 
     def process_ack_header(self, header_obj):
         self.edit_message_acknowledgment_list(header_obj)
@@ -253,11 +255,14 @@ class ProtocolLite:
         return ack_id
 
     def edit_message_acknowledgment_list(self, message_ack_header_obj):
-        logging.debug('remove {} from ack list'.format(message_ack_header_obj.ack_id))
+        self.delete_from_ack_list(message_ack_header_obj.ack_id)
+
+    def delete_from_ack_list(self, ack_id):
+        logging.debug(f'remove {ack_id} from ack list')
         try:
-            self.MESSAGES_ACKNOWLEDGMENT.remove(message_ack_header_obj.ack_id)
+            self.MESSAGES_ACKNOWLEDGMENT.remove(ack_id)
         except ValueError:
-            logging.debug('received ack is not in list')
+            logging.debug('ack is not in list')
 
 
 @contextmanager

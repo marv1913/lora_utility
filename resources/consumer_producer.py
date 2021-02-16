@@ -46,9 +46,11 @@ class ProducerThread(threading.Thread):
                 if ser.in_waiting:
                     received_raw_message = ser.readline()
                     logging.debug('received: {}'.format(received_raw_message))
-
-                    received_raw_message = bytes_to_str(received_raw_message)
-                    response_q.put(received_raw_message)
+                    try:
+                        received_raw_message = bytes_to_str(received_raw_message)
+                        response_q.put(received_raw_message)
+                    except UnicodeDecodeError:
+                        logging.debug(f"message '{received_raw_message}' dumped. because it is not encoded in UTF-8")
 
             # else:
             #     print('locked')
