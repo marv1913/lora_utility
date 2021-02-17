@@ -148,22 +148,10 @@ class ProtocolLite:
                     self.send_header(header_obj.get_header_str())
                 else:
                     logging.debug('route request was already processed')
-
-                # end_node = header_obj.end_node
-                # # wait for route reply
-                #
-                #
-                # with timeout(variables.ROUTE_REQUEST_TIMEOUT):
-                #     while True:
-                #         try:
-                #             if len(self.routing_table.get_best_route_for_destination(end_node)) != 0:
-                #                 logging.debug('new route for {} found'.format(end_node))
-                #                 break
-                #             time.sleep(0.5)
-                #         except ValueError:
-                #             # send route error
-                #             logging.debug('got not answer for route request to {}'.format(end_node))
-                #             # self.send_route_error(header_obj.end_node)
+                if header_obj.end_node in self.routing_table.get_list_of_all_available_destinations():
+                    logging.debug(f'found entry for destination {header_obj.end_node}. Sending route reply.')
+                    route = self.routing_table.get_best_route_for_destination(header_obj.end_node)
+                    self.send_route_reply(next_node=route['next_node'], end_node=route['destination'])
 
     def send_route_reply(self, next_node, end_node):
         route_reply_header_obj = header.RouteReplyHeader(None, variables.MY_ADDRESS, variables.DEFAULT_TTL, 0, end_node,
