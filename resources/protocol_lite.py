@@ -148,13 +148,13 @@ class ProtocolLite:
                     self.send_header(header_obj.get_header_str())
                 else:
                     logging.debug('route request was already processed')
-                if header_obj.end_node in self.routing_table.get_list_of_all_available_destinations():
-                    logging.debug(f'found entry for destination {header_obj.end_node}. Sending route reply.')
-                    route = self.routing_table.get_best_route_for_destination(header_obj.end_node)
-                    route_reply_header = header.RouteReplyHeader(None, variables.MY_ADDRESS, variables.TTL_START_VALUE,
-                                                                 route['hops'], header_obj.source,
-                                                                 header_obj.received_from)
-                    self.send_header(route_reply_header.get_header_str())
+                # if header_obj.end_node in self.routing_table.get_list_of_all_available_destinations():
+                #     logging.debug(f'found entry for destination {header_obj.end_node}. Sending route reply.')
+                #     route = self.routing_table.get_best_route_for_destination(header_obj.end_node)
+                #     route_reply_header = header.RouteReplyHeader(None, variables.MY_ADDRESS, variables.TTL_START_VALUE,
+                #                                                  route['hops'], header_obj.source,
+                #                                                  header_obj.received_from)
+                #     self.send_header(route_reply_header.get_header_str())
 
     def send_route_reply(self, next_node, end_node):
         route_reply_header_obj = header.RouteReplyHeader(None, variables.MY_ADDRESS, variables.DEFAULT_TTL, 0, end_node,
