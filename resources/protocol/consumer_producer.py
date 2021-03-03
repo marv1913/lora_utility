@@ -3,9 +3,7 @@ import queue
 import time
 import logging
 
-import serial
-
-import variables
+from util import variables
 
 __author__ = "Marvin Rausch"
 

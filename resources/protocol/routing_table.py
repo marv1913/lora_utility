@@ -1,7 +1,7 @@
 import logging
 import time
 
-import variables
+from util import variables
 
 __author__ = "Marvin Rausch"
 

@@ -1,6 +1,4 @@
-import logging
-
-import variables
+from util import variables
 
 __author__ = "Marvin Rausch"
 
@@ -20,6 +18,11 @@ class Header:
 
 
 def create_header_obj_from_raw_message(raw_message):
+    """
+    creates a header object of appropriate header type from raw message
+    :param raw_message: raw message from LoRa module as string
+    :return: header object (type of header obj depends on flag in raw message)
+    """
     try:
         raw_message_as_list = raw_message.split(variables.LORA_MODULE_DELIMITER)
 
@@ -30,10 +33,9 @@ def create_header_obj_from_raw_message(raw_message):
         # header_str = header_str.strip()
 
         header_as_list = header_str.split(variables.HEADER_DELIMITER)
-        del header_as_list[
-            0]  # remove first and last element, because they are empty strings (delimiter without values)
-        del header_as_list[len(
-            header_as_list) - 1]  # remove first and last element, because they are empty strings (delimiter without values)
+        # remove first and last element, because they are empty strings (delimiter without values)
+        del header_as_list[0]
+        del header_as_list[len(header_as_list) - 1]
 
         source = header_as_list[0]
         check_addr_field(source, 'source')
@@ -88,12 +90,26 @@ def create_header_obj_from_raw_message(raw_message):
         raise ValueError("header has an unexpected length")
 
 
-def check_int_field(two_digit_value_str, length=1):
-    if len(two_digit_value_str) != length:
-        int(two_digit_value_str)
+def check_int_field(str_to_convert, length=1):
+    """
+    helper function to convert string to int and check whether the string has the correct length
+    :param str_to_convert: string which should be converted to integer
+    :param length: expected length of the string
+    :return: int value of the string
+    """
+    if len(str_to_convert) != length:
+        int(str_to_convert)
 
 
 def check_addr_field(addr_str, field_name=''):
+    """
+    helper function which checks whether the passed string has the correct length. Can be used to validate addresses
+    in raw message from LoRa module.
+    :param addr_str: addr string from raw message
+    :param field_name: name of address type (e.g. source, destination, ...). This value is used for the exception
+    message.
+    :raises ValueError if length of passed string is not equal to expected length
+    """
     if len(addr_str) != 4:
         raise ValueError(
             "header field '{field_name}' has an unexpected format: {addr_str}".format(field_name=field_name,
@@ -126,13 +142,6 @@ def get_flag_from_raw_message(raw_message):
 
 def get_raw_message_as_list(raw_message):
     return raw_message.split(',')
-
-
-# def get_two_digit_str(int_value):
-#     if len(str(int_value)) == 1:
-#         return '0' + str(int_value)
-#     else:
-#         return str(int_value)
 
 
 class RouteRequestHeader(Header):

@@ -44,5 +44,9 @@ def print_welcome_text():
 
 
 def display_received_message(message_header_obj):
-    print('received message from {source}: {payload}'.format(source=message_header_obj.source,
-                                                             payload=message_header_obj.payload))
+    print(f'*******************received message from {message_header_obj.source}: {message_header_obj.payload}*****'
+          f'**************')
+
+
+def print_ack_text():
+    print('*******************message was acknowledged by receiver*******************')

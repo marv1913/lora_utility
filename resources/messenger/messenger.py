@@ -1,13 +1,12 @@
 import logging
 import time
 
-import variables
+from util import variables, module_config
 
 from prettytable import PrettyTable
 
 import view
-import module_config
-from protocol_lite import ProtocolLite
+from protocol.protocol_lite import ProtocolLite
 
 __author__ = "Marvin Rausch"
 

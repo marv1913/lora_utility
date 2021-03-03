@@ -1,6 +1,6 @@
 import logging
 
-import consumer_producer
+from protocol import consumer_producer
 import variables
 
 

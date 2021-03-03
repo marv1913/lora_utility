@@ -1,7 +1,7 @@
 import time
 import unittest
 from unittest.mock import patch, MagicMock
-import consumer_producer
+from protocol import consumer_producer
 
 __author__ = "Marvin Rausch"
 

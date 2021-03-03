@@ -7,9 +7,9 @@ import time
 from contextlib import contextmanager
 
 import consumer_producer
-import variables
+from util import variables
 import header
-import view
+from messenger import view
 from routing_table import RoutingTable
 
 __author__ = "Marvin Rausch"
@@ -96,7 +96,7 @@ class ProtocolLite:
                 except TimeoutError:
                     attempt = attempt + 1
         if message_confirmed:
-            logging.info('message was acknowledged by receiver')
+            view.print_ack_text()
         else:
             logging.debug(f'message was not acknowledged by receiver. Current ack_list: {self.MESSAGES_ACKNOWLEDGMENT}'
                           f'\nSending route error message')

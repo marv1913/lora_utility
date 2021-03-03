@@ -1,15 +1,14 @@
-import hashlib
 import logging
 import time
 
 import serial
 
-import consumer_producer
-from messenger import Messenger
-from protocol_lite import ProtocolLite
+from protocol import consumer_producer
+from messenger import messenger
+from protocol.protocol_lite import ProtocolLite
+
 
 def reset_module():
-
     import RPi.GPIO as GPIO
     import time
 
@@ -22,7 +21,6 @@ def reset_module():
 
 
 if __name__ == '__main__':
-
     # reset_module()
     logging.basicConfig()
     logging.getLogger().setLevel(logging.DEBUG)
@@ -34,7 +32,7 @@ if __name__ == '__main__':
 
     protocol = ProtocolLite()
 
-    messenger = Messenger(protocol)
+    messenger = messenger.Messenger(protocol)
     time.sleep(2)
 
     messenger.start_chatting()
