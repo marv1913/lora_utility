@@ -9,7 +9,6 @@ __author__ = "Marvin Rausch"
 
 ser = None
 
-
 logging.basicConfig(level=logging.DEBUG, format='(%(threadName)-9s) %(message)s', )
 
 BUF_SIZE = 100
@@ -49,10 +48,6 @@ class ProducerThread(threading.Thread):
                         response_q.put(received_raw_message)
                     except UnicodeDecodeError:
                         logging.debug(f"message '{received_raw_message}' dumped. because it is not encoded in UTF-8")
-
-            # else:
-            #     print('locked')
-            #     time.sleep(1)
 
 
 class ConsumerThread(threading.Thread):
@@ -106,6 +101,25 @@ def start_send_receive_threads(serial_conn):
     time.sleep(0.5)
     t2.start()
     time.sleep(0.5)
+
+
+def config_module(configuration=variables.MODULE_CONFIG):
+    configuration = configuration + '\r\n'
+    if execute_command(configuration, [variables.STATUS_OK]):
+        logging.debug('module config successfully set')
+        return True
+    logging.warning("could not set module config")
+    return False
+
+
+def get_current_address():
+    execute_command(variables.GET_ADDR)
+    addr = response_q.get(variables.COMMAND_VERIFICATION_TIMEOUT)
+    print(addr)
+    addr_as_list = addr.split(variables.LORA_MODULE_DELIMITER)
+    if addr_as_list[0].strip() != 'AT' or addr_as_list[2].strip() != 'OK':
+        raise ValueError('could not get address of module')
+    return addr_as_list[1]
 
 
 def execute_command(command_as_str, verification_list=None):

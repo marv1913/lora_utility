@@ -1,4 +1,4 @@
-import messenger
+from messenger import messenger
 
 __author__ = "Marvin Rausch"
 

@@ -6,11 +6,12 @@ import threading
 import time
 from contextlib import contextmanager
 
-import consumer_producer
+from protocol import consumer_producer
+from protocol.header import RouteReplyHeader
 from util import variables
-import header
+from protocol import header
 from messenger import view
-from routing_table import RoutingTable
+from protocol.routing_table import RoutingTable
 
 __author__ = "Marvin Rausch"
 
@@ -129,32 +130,33 @@ class ProtocolLite:
         if header_obj.source != variables.MY_ADDRESS:
             # look whether requested node is myself
             if header_obj.end_node == variables.MY_ADDRESS:
-                # Todo send route reply if there is a routing table entry for requested node (also if not end node my address)
                 logging.debug('add new routing table entry before sending route reply')
                 self.routing_table.add_routing_table_entry(header_obj.source, header_obj.received_from,
                                                            header_obj.hops + 1)
                 logging.info('sending route reply message...')
                 self.send_route_reply(next_node=header_obj.received_from, end_node=header_obj.source)
             else:
+                if len(self.routing_table.get_best_route_for_destination(header_obj.end_node)) > 0:
+                    # send route reply
+                    logging.debug(f'sending route reply to {header_obj.source} before route request is reaching '
+                                  f'destination, because found route in routing table')
+                    route = self.routing_table.get_best_route_for_destination(header_obj.end_node)
+                    route_reply = RouteReplyHeader(None, variables.MY_ADDRESS, variables.DEFAULT_TTL, route['hops'],
+                                                   header_obj.source, header_obj.received_from)
+                    self.send_header(route_reply.get_header_str())
                 if len(self.routing_table.get_best_route_for_destination(header_obj.source)) == 0:
                     # if there is no entry for source of route request, you can add routing table entry
                     self.routing_table.add_routing_table_entry(header_obj.source, header_obj.received_from,
                                                                header_obj.hops)
-                header_obj.ttl = header_obj.ttl - 1
-                header_obj.hops = header_obj.hops + 1
-                if not self.routing_table.check_route_request_already_processed(header_obj.end_node):
-                    logging.debug('forward route request message')
-                    self.routing_table.add_address_to_processed_requests_list(header_obj.end_node)
-                    self.send_header(header_obj.get_header_str())
                 else:
-                    logging.debug('route request was already processed')
-                # if header_obj.end_node in self.routing_table.get_list_of_all_available_destinations():
-                #     logging.debug(f'found entry for destination {header_obj.end_node}. Sending route reply.')
-                #     route = self.routing_table.get_best_route_for_destination(header_obj.end_node)
-                #     route_reply_header = header.RouteReplyHeader(None, variables.MY_ADDRESS, variables.TTL_START_VALUE,
-                #                                                  route['hops'], header_obj.source,
-                #                                                  header_obj.received_from)
-                #     self.send_header(route_reply_header.get_header_str())
+                    header_obj.ttl = header_obj.ttl - 1
+                    header_obj.hops = header_obj.hops + 1
+                    if not self.routing_table.check_route_request_already_processed(header_obj.end_node):
+                        logging.debug('forward route request message')
+                        self.routing_table.add_address_to_processed_requests_list(header_obj.end_node)
+                        self.send_header(header_obj.get_header_str())
+                    else:
+                        logging.debug('route request was already processed')
 
     def send_route_reply(self, next_node, end_node):
         route_reply_header_obj = header.RouteReplyHeader(None, variables.MY_ADDRESS, variables.DEFAULT_TTL, 0, end_node,

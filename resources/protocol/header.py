@@ -24,7 +24,7 @@ def create_header_obj_from_raw_message(raw_message):
     :return: header object (type of header obj depends on flag in raw message)
     """
     try:
-        raw_message_as_list = raw_message.split(variables.LORA_MODULE_DELIMITER)
+        raw_message_as_list = raw_message.split(variables.LORA_MODULE_DELIMITER, maxsplit=3)
 
         received_from = raw_message_as_list[1]
         check_addr_field(received_from, 'received_from')

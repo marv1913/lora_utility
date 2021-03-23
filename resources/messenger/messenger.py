@@ -1,11 +1,12 @@
 import logging
 import time
 
+from protocol import consumer_producer
 from util import variables, module_config
 
 from prettytable import PrettyTable
 
-import view
+from messenger import view
 from protocol.protocol_lite import ProtocolLite
 
 __author__ = "Marvin Rausch"
@@ -20,7 +21,7 @@ class Messenger:
     DESTINATION_ADDRESS = '0138'
 
     def __init__(self, protocol_obj):
-        variables.MY_ADDRESS = module_config.get_current_address()
+        variables.MY_ADDRESS = consumer_producer.get_current_address()
         logging.info('loaded address of module: {}'.format(variables.MY_ADDRESS))
         self.protocol = protocol_obj
         self.protocol.start_protocol_thread()
