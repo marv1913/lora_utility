@@ -136,27 +136,27 @@ class ProtocolLite:
                 logging.info('sending route reply message...')
                 self.send_route_reply(next_node=header_obj.received_from, end_node=header_obj.source)
             else:
-                if len(self.routing_table.get_best_route_for_destination(header_obj.end_node)) > 0:
-                    # send route reply
-                    logging.debug(f'sending route reply to {header_obj.source} before route request is reaching '
-                                  f'destination, because found route in routing table')
-                    route = self.routing_table.get_best_route_for_destination(header_obj.end_node)
-                    route_reply = RouteReplyHeader(None, variables.MY_ADDRESS, variables.DEFAULT_TTL, route['hops'],
-                                                   header_obj.source, header_obj.received_from)
-                    self.send_header(route_reply.get_header_str())
+                # if len(self.routing_table.get_best_route_for_destination(header_obj.end_node)) > 0:
+                #     # send route reply
+                #     logging.debug(f'sending route reply to {header_obj.source} before route request is reaching '
+                #                   f'destination, because found route in routing table')
+                #     route = self.routing_table.get_best_route_for_destination(header_obj.end_node)
+                #     route_reply = RouteReplyHeader(None, header_obj.end_node, variables.DEFAULT_TTL, route['hops'],
+                #                                    header_obj.source, header_obj.received_from)
+                #     self.send_header(route_reply.get_header_str())
                 if len(self.routing_table.get_best_route_for_destination(header_obj.source)) == 0:
                     # if there is no entry for source of route request, you can add routing table entry
                     self.routing_table.add_routing_table_entry(header_obj.source, header_obj.received_from,
                                                                header_obj.hops)
+
+                header_obj.ttl = header_obj.ttl - 1
+                header_obj.hops = header_obj.hops + 1
+                if not self.routing_table.check_route_request_already_processed(header_obj.end_node):
+                    logging.debug('forward route request message')
+                    self.routing_table.add_address_to_processed_requests_list(header_obj.end_node)
+                    self.send_header(header_obj.get_header_str())
                 else:
-                    header_obj.ttl = header_obj.ttl - 1
-                    header_obj.hops = header_obj.hops + 1
-                    if not self.routing_table.check_route_request_already_processed(header_obj.end_node):
-                        logging.debug('forward route request message')
-                        self.routing_table.add_address_to_processed_requests_list(header_obj.end_node)
-                        self.send_header(header_obj.get_header_str())
-                    else:
-                        logging.debug('route request was already processed')
+                    logging.debug('route request was already processed')
 
     def send_route_reply(self, next_node, end_node):
         route_reply_header_obj = header.RouteReplyHeader(None, variables.MY_ADDRESS, variables.DEFAULT_TTL, 0, end_node,
@@ -199,7 +199,7 @@ class ProtocolLite:
                 self.routing_table.add_routing_table_entry(header_obj.source, header_obj.received_from,
                                                            header_obj.hops + 1)
                 # forward message
-                header_obj.next_node = self.routing_table.get_best_route_for_destination(header_obj.source)['next_node']
+                header_obj.next_node = self.routing_table.get_best_route_for_destination(header_obj.end_node)['next_node']
                 header_obj.hops = header_obj.hops + 1
                 header_obj.ttl = header_obj.ttl - 1
                 self.send_header(header_obj.get_header_str())
