@@ -1,7 +1,7 @@
 import logging
 
 from protocol import consumer_producer
-import variables
+from util import variables
 
 
 def config_module(configuration=variables.MODULE_CONFIG):

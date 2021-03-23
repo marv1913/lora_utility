@@ -3,7 +3,7 @@ import time
 
 import serial
 
-from protocol import consumer_producer
+import protocol.consumer_producer
 from messenger import messenger
 from protocol.protocol_lite import ProtocolLite
 
@@ -28,7 +28,7 @@ if __name__ == '__main__':
     ser = serial.serial_for_url('/dev/ttyS0', baudrate=115200, timeout=20)
     # module_conf = ModuleConfig(consumer_producer.ser)
     # module_conf.config_module()
-    consumer_producer.start_send_receive_threads(ser)
+    protocol.consumer_producer.start_send_receive_threads(ser)
 
     protocol = ProtocolLite()
 

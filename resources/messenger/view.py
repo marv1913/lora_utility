@@ -1,4 +1,4 @@
-from messenger import messenger
+import messenger
 
 __author__ = "Marvin Rausch"
 
@@ -15,11 +15,11 @@ WELCOME_TEXT = """
 
 
 def print_mode(mode):
-    if mode == messenger.CONFIG_MODE:
+    if mode == messenger.messenger.CONFIG_MODE:
         print('config mode entered')
-    if mode == messenger.SEND_MODE:
+    if mode == messenger.messenger.SEND_MODE:
         print('send mode entered')
-    if mode == messenger.LIST_MODE:
+    if mode == messenger.messenger.LIST_MODE:
         print('list mode entered')
 
 
