@@ -225,7 +225,10 @@ class ProtocolLite:
         self.edit_message_acknowledgment_list(header_obj)
         header_obj.ttl -= 1
         logging.debug('forward ack message')
-        self.send_header(header_obj.get_header_str())
+        if header_obj.end_node != variables.MY_ADDRESS:
+            self.send_header(header_obj.get_header_str())
+        else:
+            logging.debug(f'do not forward ack message, because end node was my address')
 
     def send_route_error(self, end_node):
         route_error_header_obj = header.RouteErrorHeader(None, variables.MY_ADDRESS, 9,
