@@ -2,7 +2,9 @@
 
 name: CI
 
-# Controls when the action will run. 
+
+# Controls when the action will run.
+
 on:
   # Triggers the workflow on push or pull request events but only for the master branch
   push:
@@ -29,4 +31,5 @@ jobs:
       - name: install requirements
         run: python3 -m pip install -r requirements.txt
       - name: Run tests
-        run: python3 -m pytest
+        run: cd resources && python3 -m pytest
+

@@ -1,6 +1,8 @@
 import unittest
 
-from routing_table import RoutingTable
+__author__ = "Marvin Rausch"
+
+from protocol.routing_table import RoutingTable
 
 
 class RoutingTableTest(unittest.TestCase):

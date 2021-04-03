@@ -1,9 +1,29 @@
-route_reply from 0131 to 0139
-0131FFFF04100139013900
+0137 sends route request to 0138 and 0138 sends route reply:
+|0137|3|9|0|0138|
+|0138|4|9|0|0137|0137| # length 22
 
-route_request from 0131 to 0139
-0131FFFF0310013900
 
-expected reply from 0139:
-0139FFFF04100131013100
+route_reply from 0138 to 0136 over 0137
+|0138|4|9|0|0136|0137|  (length = 22)
+0137 forwards:
+|0138|4|8|1|0136|0136|
 
+
+route_request from 0138 to 0137 and gets reply from 0137
+|0138|3|9|0|0137|  (length=17)
+|0137|4|9|0|0138|0138|
+
+
+0138 sends route request to 0136 and 0137 is forwarding this request
+|0138|3|9|0|0136|
+|0138|3|8|1|0136|
+
+
+route request from 0139 to find 0134
+01393910134
+
+message from 0137 to 0139
+0137 1 9 0139 0139 hello
+
+route error from 0139 about broken node 0138
+|0139|5|4|0138| (length=15)
