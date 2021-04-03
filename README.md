@@ -1,5 +1,5 @@
 # LORA Utility
-This application implements a self designed multi hop [routing protocol](https://github.com/marv1913/lora_utility/wiki). To demonstrate the functionality of the protocol a messenger was implemented, too. 
+This application implements a self designed multi hop [routing protocol](https://github.com/marv1913/lora_utility/wiki). The application was designed for a  Ting-01 SX1278 LoRa module. To demonstrate the functionality of the protocol a messenger was implemented, too. 
 
 ## Deployment
 
@@ -12,3 +12,6 @@ This application implements a self designed multi hop [routing protocol](https:/
 3.  Start the application:
 
     ``python3 resources/main.py``
+
+
+  
